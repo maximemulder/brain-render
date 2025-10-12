@@ -4,9 +4,6 @@ version = "0.1.0"
 authors = ["Maxime Mulder <maxime-mulder@outlook.com>"]
 edition = "2024"
 
-[build]
-rustflags = ["--cfg=web_sys_unstable_apis"]
-
 [lib]
 crate-type = ["cdylib", "rlib"]
 
