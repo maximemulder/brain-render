@@ -24,6 +24,9 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 web-sys = { version = "0.3.81", features = ["Window", "Document", "Element", "HtmlCanvasElement", "GpuCanvasContext", "Gpu"] }
 wgpu = { version = "27.0.1", features = ["web"] }
 wasm-bindgen-futures = "0.4.54"
+wasm-bindgen-file-reader = "1.0.0"
+nifti = "0.17.0"
+tempfile = "3.23.0"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
