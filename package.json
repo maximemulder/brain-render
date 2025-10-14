@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "wasm-pack build src-rust --target web --out-dir ../dist && tsc && vite build",
+    "build": "RUSTFLAGS=\"-A warnings\" wasm-pack build src-rust --target web --out-dir ../dist && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
