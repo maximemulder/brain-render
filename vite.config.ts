@@ -7,8 +7,9 @@ import wasm from "vite-plugin-wasm";
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async ({mode}) => ({
   plugins: [react(), topLevelAwait(), wasm()],
+  base: mode === 'production' ? '/brain-render/' : '/',
   build: {
     emptyOutDir: false,
   },
