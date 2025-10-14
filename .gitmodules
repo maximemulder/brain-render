@@ -1,0 +1,4 @@
+[submodule "src-rust/forks/nifti-rs"]
+	path = src-rust/forks/nifti-rs
+	url = https://github.com/maximemulder/nifti-rs
+	branch = read_nifti_web
