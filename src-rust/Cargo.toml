@@ -25,8 +25,7 @@ web-sys = { version = "0.3.81", features = ["Window", "Document", "Element", "Ht
 wgpu = { version = "27.0.1", features = ["web"] }
 wasm-bindgen-futures = "0.4.54"
 wasm-bindgen-file-reader = "1.0.0"
-nifti = "0.17.0"
-tempfile = "3.23.0"
+nifti = { version = "0.17.0", path = "forks/nifti-rs" }
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
