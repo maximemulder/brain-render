@@ -1,6 +1,6 @@
 import "./App.css";
 import {ChangeEvent} from "react";
-import {init_graphics} from "../src-rust/pkg/brain_render_backend";
+import {init_graphics} from "../dist/brain_render_backend";
 import MyWorker from './worker.ts?worker';
 
 const worker = new MyWorker();
