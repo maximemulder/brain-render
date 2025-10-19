@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use web_sys::HtmlCanvasElement;
 
 use crate::{nifti_slice::NiftiSlice, renderer::texture::create_texture_from_nifti_slice};
@@ -61,21 +59,7 @@ impl Renderer {
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
-                r#"
-                @vertex
-                fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4<f32> {
-                    let x = f32(i32(in_vertex_index) - 1);
-                    let y = f32(i32(in_vertex_index & 1u) * 2 - 1);
-                    return vec4<f32>(x, y, 0.0, 1.0);
-                }
-
-                @fragment
-                fn fs_main() -> @location(0) vec4<f32> {
-                    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
-                }
-                "#,
-            )),
+            source: wgpu::ShaderSource::Wgsl(include_str!("renderer/shaders/shader.wgsl").into()),
         });
 
     let pipeline_layout = device.create_pipeline_layout(
@@ -90,7 +74,7 @@ impl Renderer {
     let swapchain_format = swapchain_capabilities.formats[0];
 
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: None,
+        label: Some("render_pipeline"),
         layout: Some(&pipeline_layout),
         vertex: wgpu::VertexState {
             module: &shader,
@@ -162,20 +146,9 @@ impl Renderer {
             timestamp_writes: None,
             occlusion_query_set: None,
         });
-        // render_pass.set_pipeline(&self.render_pipeline);
-        // render_pass.draw(0..3, 0..1);
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.bind_group, &[]); // NEW!
-        // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw(0..3, 0..1);
-        // render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
-        // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]); // NEW!
-        // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-
-        // render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
-
+        render_pass.draw(0..6, 0..1);
     }
 
     self.queue.submit(Some(encoder.finish()));

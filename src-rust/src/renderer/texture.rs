@@ -1,13 +1,18 @@
 use crate::nifti_slice::NiftiSlice;
 
+fn get_max_data_value(data: &[f32]) -> f32 {
+    data.iter().copied().fold(0.0, f32::max)
+}
+
 pub fn create_texture_from_nifti_slice(device: &wgpu::Device, queue: &wgpu::Queue, nifti_slice: NiftiSlice) -> (wgpu::BindGroup, wgpu::BindGroupLayout) {
     // Normalize f32 data to [0, 1] and convert to RGBA
     let mut rgba_data = Vec::with_capacity((nifti_slice.width * nifti_slice.height * 4) as usize);
 
+    let max = get_max_data_value(&nifti_slice.data);
+
     for value in nifti_slice.data {
         // Normalize your f32 data to [0, 1] range
-        let normalized = (value - f32::MIN) / (f32::MAX - f32::MIN); // Adjust min/max as needed
-
+        let normalized = value / max;
         // Convert to grayscale RGBA
         rgba_data.extend_from_slice(&[
             (normalized * 255.0) as u8,

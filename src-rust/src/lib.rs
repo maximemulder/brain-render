@@ -41,6 +41,10 @@ pub async fn read_file(file: File) {
     log!("Starting to read the NIfTI file.");
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
     let mut volume = nifti.into_volume();
+    for _ in 0..50 {
+        volume.read_slice().expect("Could not read slice.");
+    }
+
     match volume.read_slice() {
         Ok(slice) => {
             {
