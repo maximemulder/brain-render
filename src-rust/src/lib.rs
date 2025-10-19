@@ -1,11 +1,11 @@
 mod browser;
 mod utils;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Mutex};
 
-use nifti::{NiftiObject, ReaderStreamedOptions};
+use nifti::{InMemNiftiVolume, NiftiObject, ReaderStreamedOptions};
 use wasm_bindgen::prelude::*;
-use web_sys::{HtmlCanvasElement, File};
+use web_sys::{File, HtmlCanvasElement, Worker};
 
 /// Get the HTML canvas element on which to render from the document.
 pub fn get_canvas() -> HtmlCanvasElement {
@@ -19,18 +19,47 @@ pub fn get_canvas() -> HtmlCanvasElement {
         .expect("Element is not a canvas.")
 }
 
+// NOTE: A web file cannot be sent between threads.
+// In an ideal architecture, the file is kept in the web worker, and the main thread asynchronously
+// calls the web worker whenever it needs to read the file.
+// static NIFTI: Mutex<Option<GenericNiftiObject<StreamedNiftiVolume<Either<BufReader<WebSysFile>, GzDecoder<BufReader<WebSysFile>>>>>>> = Mutex::new(None);
+
+static NIFTI_SLICE: Mutex<Option<InMemNiftiVolume>> = Mutex::new(None);
+
 #[wasm_bindgen]
 pub async fn read_file(file: File) {
     utils::set_panic_hook();
     browser::log("Starting to read the NIfTI file.");
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
-    browser::log(&format!("NIfTI file read, dimensions: {:?}", nifti.header().dim));
+    let mut volume = nifti.into_volume();
+    match volume.read_slice() {
+        Ok(slice) => {
+{
+            let mut guard = NIFTI_SLICE.lock().unwrap();
+            *guard = Some(slice);
+            browser::log(&format!("Successfully read NIfTI slice, slices left: {}", volume.slices_left()));
+            browser::log(&format!("Guard is some: {}", guard.is_some()));}
+            browser::log(&format!("Mutex is some: {}", NIFTI_SLICE.lock().unwrap().is_some()));
+        },
+        Err(error) => {
+            browser::log(&format!("Error while reading NIfTI slice: {:?}", error));
+        },
+    }
+}
+
+fn create_send_file_message() -> JsValue {
+    let obj = js_sys::Object::new();
+    js_sys::Reflect::set(&obj, &"action".into(), &"send-file".into()).unwrap();
+    obj.into()
 }
 
 /// Initiate the graphics features.
 #[wasm_bindgen]
-pub async fn init_graphics() {
+pub async fn init_graphics(nifti_worker: Worker) {
     utils::set_panic_hook();
+    browser::log(&format!("NIfTI slice is set: {}", NIFTI_SLICE.lock().unwrap().is_some()));
+    let result = nifti_worker.post_message(&create_send_file_message());
+    browser::log(&format!("Web worker result {:?}", result));
     let canvas = get_canvas();
     let mut gfx_state = GfxState::new(canvas).await;
     gfx_state.render();
