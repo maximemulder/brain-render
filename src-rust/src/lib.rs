@@ -29,20 +29,21 @@ static NIFTI_SLICE: Mutex<Option<InMemNiftiVolume>> = Mutex::new(None);
 #[wasm_bindgen]
 pub async fn read_file(file: File) {
     utils::set_panic_hook();
-    browser::log("Starting to read the NIfTI file.");
+    log!("Starting to read the NIfTI file.");
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
     let mut volume = nifti.into_volume();
     match volume.read_slice() {
         Ok(slice) => {
-{
-            let mut guard = NIFTI_SLICE.lock().unwrap();
-            *guard = Some(slice);
-            browser::log(&format!("Successfully read NIfTI slice, slices left: {}", volume.slices_left()));
-            browser::log(&format!("Guard is some: {}", guard.is_some()));}
-            browser::log(&format!("Mutex is some: {}", NIFTI_SLICE.lock().unwrap().is_some()));
+            {
+                let mut guard = NIFTI_SLICE.lock().unwrap();
+                *guard = Some(slice);
+                log!("Successfully read NIfTI slice, slices left: {}", volume.slices_left());
+                log!("Guard is some: {}", guard.is_some());
+            }
+            log!("Mutex is some: {}", NIFTI_SLICE.lock().unwrap().is_some());
         },
         Err(error) => {
-            browser::log(&format!("Error while reading NIfTI slice: {:?}", error));
+            log!("Error while reading NIfTI slice: {:?}", error);
         },
     }
 }
@@ -57,9 +58,9 @@ fn create_send_file_message() -> JsValue {
 #[wasm_bindgen]
 pub async fn init_graphics(nifti_worker: Worker) {
     utils::set_panic_hook();
-    browser::log(&format!("NIfTI slice is set: {}", NIFTI_SLICE.lock().unwrap().is_some()));
+    log!("NIfTI slice is set: {}", NIFTI_SLICE.lock().unwrap().is_some());
     let result = nifti_worker.post_message(&create_send_file_message());
-    browser::log(&format!("Web worker result {:?}", result));
+    log!("Web worker result {:?}", result);
     let canvas = get_canvas();
     let mut gfx_state = GfxState::new(canvas).await;
     gfx_state.render();
