@@ -5,7 +5,9 @@ use std::{borrow::Cow, sync::Mutex};
 
 use nifti::{InMemNiftiVolume, NiftiObject, ReaderStreamedOptions};
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{File, HtmlCanvasElement, Worker};
+use js_sys::Promise;
 
 /// Get the HTML canvas element on which to render from the document.
 pub fn get_canvas() -> HtmlCanvasElement {
@@ -25,6 +27,19 @@ pub fn get_canvas() -> HtmlCanvasElement {
 // static NIFTI: Mutex<Option<GenericNiftiObject<StreamedNiftiVolume<Either<BufReader<WebSysFile>, GzDecoder<BufReader<WebSysFile>>>>>>> = Mutex::new(None);
 
 static NIFTI_SLICE: Mutex<Option<InMemNiftiVolume>> = Mutex::new(None);
+
+async fn await_worker_response(worker: &web_sys::Worker, message: JsValue) -> Result<JsValue, JsValue> {
+    let promise = Promise::new(&mut |resolve, _reject| {
+        let closure = Closure::once(move |event: web_sys::MessageEvent| {
+            let _ = resolve.call1(&JsValue::NULL, &event.data());
+        });
+        worker.set_onmessage(Some(closure.as_ref().unchecked_ref()));
+        closure.forget();
+    });
+
+    worker.post_message(&message)?;
+    JsFuture::from(promise).await
+}
 
 #[wasm_bindgen]
 pub async fn read_file(file: File) {
@@ -59,7 +74,7 @@ fn create_send_file_message() -> JsValue {
 pub async fn init_graphics(nifti_worker: Worker) {
     utils::set_panic_hook();
     log!("NIfTI slice is set: {}", NIFTI_SLICE.lock().unwrap().is_some());
-    let result = nifti_worker.post_message(&create_send_file_message());
+    let result = await_worker_response(&nifti_worker, create_send_file_message()).await;
     log!("Web worker result {:?}", result);
     let canvas = get_canvas();
     let mut gfx_state = GfxState::new(canvas).await;

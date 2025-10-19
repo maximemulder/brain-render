@@ -8,10 +8,15 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
     switch (event.data.action) {
         case 'read-file':
             console.log("Web worker read file.");
-            return await read_file(event.data.file);
+            await read_file(event.data.file);
+            break;
         case 'send-file':
             console.log("Web worker send file.");
-            return 0;
+            postMessage({
+                action: 'send-file',
+                result: 0
+            });
+            break;
     }
 }
 
