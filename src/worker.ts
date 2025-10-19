@@ -1,4 +1,4 @@
-import {read_file} from "../src-rust/pkg/brain_render_backend";
+import {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
 
 type WorkerMessage =
     | {action: 'read-file', file: File}
@@ -12,9 +12,11 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
             break;
         case 'send-file':
             console.log("Web worker send file.");
+            let slice = send_file();
+            console.log(slice);
             postMessage({
                 action: 'send-file',
-                result: 0
+                slice,
             });
             break;
     }

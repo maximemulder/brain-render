@@ -4,7 +4,7 @@ mod utils;
 use std::{borrow::Cow, sync::Mutex};
 
 use nifti::{InMemNiftiVolume, NiftiObject, ReaderStreamedOptions};
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{convert::FromWasmAbi, prelude::*};
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{File, HtmlCanvasElement, Worker};
 use js_sys::Promise;
@@ -63,19 +63,52 @@ pub async fn read_file(file: File) {
     }
 }
 
+#[wasm_bindgen]
+pub fn send_file() -> JsValue {
+    // NIFTI_SLICE.lock().unwrap().clone().unwrap()
+    let slice: &Option<InMemNiftiVolume> = &NIFTI_SLICE.lock().unwrap();
+    match slice {
+        Some(slice) => serde_wasm_bindgen::to_value(slice).unwrap(),
+        None => JsValue::NULL,
+    }
+}
+
 fn create_send_file_message() -> JsValue {
     let obj = js_sys::Object::new();
     js_sys::Reflect::set(&obj, &"action".into(), &"send-file".into()).unwrap();
     obj.into()
 }
 
+// To extract from JsValue:
+fn extract_slice(js_value: JsValue) -> Result<InMemNiftiVolume, JsValue> {
+    // Use serde-like approach if available, or:
+    let obj = js_value.dyn_into::<js_sys::Object>()?;
+
+    // Get the slice property
+    let slice_js = js_sys::Reflect::get(&obj, &"slice".into())?;
+
+    Ok(serde_wasm_bindgen::from_value(slice_js).expect("damn"))
+}
+
+use nifti::NiftiVolume;
+
 /// Initiate the graphics features.
 #[wasm_bindgen]
 pub async fn init_graphics(nifti_worker: Worker) {
     utils::set_panic_hook();
     log!("NIfTI slice is set: {}", NIFTI_SLICE.lock().unwrap().is_some());
-    let result = await_worker_response(&nifti_worker, create_send_file_message()).await;
-    log!("Web worker result {:?}", result);
+    let result = await_worker_response(&nifti_worker, create_send_file_message()).await.expect("Could not read the worker response");
+    let slice = extract_slice(result).expect("Could not read the NIfTI slice");
+    log!("{:?}", slice);
+    /* let total_voxels
+        = slice.dim()[1] // x
+        * slice.dim()[2] // y
+        * slice.dim()[3]; */
+    let x = slice.dim()[1];
+    let y = slice.dim()[2];
+    let float_data: Vec<f32> = slice.raw_data().chunks(4)
+        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
+        .collect();
     let canvas = get_canvas();
     let mut gfx_state = GfxState::new(canvas).await;
     gfx_state.render();
@@ -87,6 +120,59 @@ struct GfxState {
   queue: wgpu::Queue,
   config: wgpu::SurfaceConfiguration,
   render_pipeline: wgpu::RenderPipeline,
+}
+
+fn create_texture_from_f32_data(device: &wgpu::Device, queue: &wgpu::Queue, data: &[f32], width: u32, height: u32) -> wgpu::Texture {
+    // Normalize f32 data to [0, 1] and convert to RGBA
+    let mut rgba_data = Vec::with_capacity((width * height * 4) as usize);
+
+    for &value in data {
+        // Normalize your f32 data to [0, 1] range
+        let normalized = (value - f32::MIN) / (f32::MAX - f32::MIN); // Adjust min/max as needed
+
+        // Convert to grayscale RGBA
+        rgba_data.extend_from_slice(&[
+            (normalized * 255.0) as u8,
+            (normalized * 255.0) as u8,
+            (normalized * 255.0) as u8,
+            255, // Alpha
+        ]);
+    }
+
+    let texture_size = wgpu::Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+    };
+
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("NIfTI Texture"),
+        size: texture_size,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: Default::default(),
+    });
+
+    queue.write_texture(
+        wgpu::TexelCopyTextureInfo {
+            texture: &texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        },
+        &rgba_data,
+        wgpu::TexelCopyBufferLayout {
+            offset: 0,
+            bytes_per_row: Some(4 * width),
+            rows_per_image: Some(height),
+        },
+        texture_size,
+    );
+
+    texture
 }
 
 impl GfxState {
