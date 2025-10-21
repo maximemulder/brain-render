@@ -1,10 +1,11 @@
-import {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
+import wasm, {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
 
 type WorkerMessage =
     | {action: 'read-file', file: File}
     | {action: 'send-file'}
 
 onmessage = async (event: MessageEvent<WorkerMessage>) => {
+    await wasm();
     switch (event.data.action) {
         case 'read-file':
             console.log("Web worker read file.");

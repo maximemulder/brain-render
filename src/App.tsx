@@ -1,13 +1,14 @@
 import "./App.css";
 import {ChangeEvent} from "react";
-import {init_graphics} from "../src-rust/pkg/brain_render_backend";
-import NiftiFileWorker from './worker.ts?worker';
+import wasm, {init_graphics} from "../src-rust/pkg/brain_render_backend";
+import NiftiFileWorker from './worker?worker';
 
 /** Web worker that handles the loading and reading of NIfTI files. */
 const worker = new NiftiFileWorker();
 
 function App() {
   async function handleStart() {
+    await wasm();
     init_graphics(worker);
   }
 
