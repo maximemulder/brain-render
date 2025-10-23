@@ -25,7 +25,7 @@ web-sys = { version = "0.3.81", features = ["Window", "Document", "Element", "Ht
 wgpu = { version = "27.0.1", features = ["web"] }
 wasm-bindgen-futures = "0.4.54"
 wasm-bindgen-file-reader = "1.0.0"
-nifti = { version = "0.17.0", path = "forks/nifti-rs" }
+nifti = { version = "0.17.0", path = "forks/nifti-rs", features = ["ndarray"] }
 js-sys = "0.3.81"
 serde-wasm-bindgen = "0.6.5"
 either = "1.15.0"
