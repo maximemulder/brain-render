@@ -14,7 +14,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(web_sys_unstable_apis)'] }
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = "0.2.104"
+wasm-bindgen = { version = "0.2.104", features = ["serde-serialize"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -27,8 +27,8 @@ wasm-bindgen-futures = "0.4.54"
 wasm-bindgen-file-reader = "1.0.0"
 nifti = { version = "0.17.0", path = "forks/nifti-rs", features = ["ndarray"] }
 js-sys = "0.3.81"
+serde = { version = "1.0.228", features = ["derive"] }
 serde-wasm-bindgen = "0.6.5"
-either = "1.15.0"
 ndarray = "0.16.1"
 
 [profile.release]
