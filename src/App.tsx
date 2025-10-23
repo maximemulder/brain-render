@@ -1,22 +1,15 @@
 import "./App.css";
 import {ChangeEvent, useState} from "react";
-import wasm, {init_graphics} from "../src-rust/pkg/brain_render_backend";
 import NiftiFileWorker from './worker?worker';
 import Controls from "./Controls";
 import { createViewerState, ViewerState } from "./types";
+import Pane from "./Pane";
 
 /** Web worker that handles the loading and reading of NIfTI files. */
-const worker = new NiftiFileWorker();
+export const worker = new NiftiFileWorker();
 
 function App() {
   let [state, setState] = useState<ViewerState | null>(null);
-
-  async function handleStart() {
-    if (state !== null) {
-      await wasm();
-      init_graphics(worker, state.focalPoint);
-    }
-  }
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files === null) {
@@ -57,12 +50,16 @@ function App() {
   return (
     <main className="container">
       <h1>Welcome to Brain-Render</h1>
-      <canvas id="canvas"></canvas>
-        {state !== null ? <Controls state={state} setState={setState} /> : null}
-        <button type="submit" onClick={handleStart}>Start</button>
-        <label htmlFor="file">Load custom file</label>
-        <input id="file" type="file" onChange={handleFileChange} />
-        <button type="button" onClick={handleLoadDemo}>Load demo file</button>
+      {state !== null ?
+        <>
+          <Pane state={state} />
+          <Controls state={state} setState={setState} />
+        </>
+        : null
+      }
+      <label htmlFor="file">Load custom file</label>
+      <input id="file" type="file" onChange={handleFileChange} />
+      <button type="button" onClick={handleLoadDemo}>Load demo file</button>
     </main>
   );
 }
