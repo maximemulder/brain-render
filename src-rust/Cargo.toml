@@ -29,6 +29,7 @@ nifti = { version = "0.17.0", path = "forks/nifti-rs", features = ["ndarray"] }
 js-sys = "0.3.81"
 serde-wasm-bindgen = "0.6.5"
 either = "1.15.0"
+ndarray = "0.16.1"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.

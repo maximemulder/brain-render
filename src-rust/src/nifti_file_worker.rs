@@ -4,7 +4,7 @@ use nifti::{InMemNiftiVolume, NiftiObject, ReaderStreamedOptions};
 use wasm_bindgen::JsValue;
 use web_sys::File;
 
-use crate::log;
+use crate::{log, nifti_slice::Nifti2DSlice};
 
 // NOTE: A web file cannot be sent between threads.
 // In an ideal architecture, the file is kept in the web worker, and the main thread asynchronously
@@ -39,9 +39,10 @@ pub async fn read_file(file: File) {
 
 pub fn send_file() -> JsValue {
     NIFTI_SLICE.with_borrow(|slice| {
-        match slice {
-            Some(slice) => serde_wasm_bindgen::to_value(slice).unwrap(),
-            None => JsValue::NULL,
-        }
+        let Some(slice) = slice else {
+            return JsValue::NULL;
+        };
+
+        Nifti2DSlice::from_volume(&slice).to_js()
     })
 }

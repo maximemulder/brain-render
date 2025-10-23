@@ -1,6 +1,6 @@
 use web_sys::HtmlCanvasElement;
 
-use crate::{nifti_slice::NiftiSlice, renderer::texture::create_texture_from_nifti_slice};
+use crate::{nifti_slice::Nifti2DSlice, renderer::texture::create_texture_from_nifti_slice};
 
 pub mod texture;
 
@@ -14,7 +14,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub async fn new(canvas: HtmlCanvasElement, nifti_slice: NiftiSlice) -> Self {
+  pub async fn new(canvas: HtmlCanvasElement, nifti_slice: Nifti2DSlice) -> Self {
     let x = canvas.width();
     let y = canvas.height();
     let instance = wgpu::Instance::default();
