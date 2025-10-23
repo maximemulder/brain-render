@@ -23,7 +23,7 @@ export default function Controls({state, setState}: {state: ViewerState, setStat
           id="rows-slider"
           type="range"
           min={0}
-          max={state.properties.rows}
+          max={state.properties.rows - 1}
           value={state.focalPoint.x}
           onChange={handleFocalPointChange('x')}
         />
@@ -34,7 +34,7 @@ export default function Controls({state, setState}: {state: ViewerState, setStat
         <input
           id="columns-slider"
           type="range"
-          max={state.properties.columns}
+          max={state.properties.columns - 1}
           value={state.focalPoint.y}
           onChange={handleFocalPointChange('y')}
         />
@@ -46,7 +46,7 @@ export default function Controls({state, setState}: {state: ViewerState, setStat
           id="slices-slider"
           type="range"
           min="0"
-          max={state.properties.slices}
+          max={state.properties.slices - 1}
           value={state.focalPoint.z}
           onChange={handleFocalPointChange('z')}
         />

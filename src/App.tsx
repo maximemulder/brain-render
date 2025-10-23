@@ -52,7 +52,7 @@ function App() {
       <h1>Welcome to Brain-Render</h1>
       {state !== null ?
         <>
-          <Pane state={state} />
+          <Pane state={state} setState={setState} />
           <Controls state={state} setState={setState} />
         </>
         : null
