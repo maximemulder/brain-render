@@ -8,11 +8,10 @@ mod web;
 use std::cell::RefCell;
 
 use wasm_bindgen::prelude::*;
-use web_sys::File;
+use web_sys::{File, HtmlCanvasElement};
 
 use crate::nifti_slice::Nifti2DSlice;
 use crate::renderer::Renderer;
-use crate::web::get_canvas;
 
 thread_local! {
   static RENDERER: RefCell<Option<Renderer>> = RefCell::new(None);
@@ -20,11 +19,10 @@ thread_local! {
 
 /// Initiate the graphics features.
 #[wasm_bindgen]
-pub async fn init_graphics(slice_js: JsValue) {
+pub async fn init_graphics(slice_js: JsValue, canvas: HtmlCanvasElement) {
     utils::set_panic_hook();
     // Get the slice property
     let slice = Nifti2DSlice::from_js(&slice_js).expect("Could not re-create slice");
-    let canvas = get_canvas();
 
     let initialized = RENDERER.with_borrow(|renderer| renderer.is_some());
     if !initialized {

@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { NiftiPoint3D, ViewerState } from "./types";
+import { clamp } from "./util";
 
 export default function Controls({state, setState}: {state: ViewerState, setState: (state: ViewerState) => void}) {
   const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
@@ -49,10 +51,49 @@ function Slider({id, name, max, value, onChange}: {
   value: number,
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const input = inputRef.current;
+    if (input === null) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+
+      const delta = Math.sign(event.deltaY); // -1 for scroll up, 1 for scroll down
+      const newValue = value - delta; // Invert so scroll up increases, scroll down decreases
+
+      const clampedValue = clamp(0, max - 1, newValue);
+
+      // Only update if the value actually changed
+      if (clampedValue !== value) {
+        // Create a synthetic React change event
+        const syntheticEvent = {
+          target: {
+            value: clampedValue.toString(),
+          }
+        } as React.ChangeEvent<HTMLInputElement>;
+
+        onChange(syntheticEvent);
+      }
+    };
+
+    console.log("Add event");
+
+    input.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      input.removeEventListener('wheel', handleWheel);
+    };
+  }, [value, max, onChange]);
+
   return (
     <div>
       <label htmlFor={id}>{name}: {value}</label>
       <input
+        ref={inputRef}
         id={id}
         type="range"
         min={0}
