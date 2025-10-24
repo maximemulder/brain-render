@@ -5,21 +5,17 @@ struct VertexOutput {
 
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
-    var pos = array<vec2<f32>, 6>(
+    let pos = array<vec2<f32>, 4>(
         vec2<f32>(-1.0, -1.0),
-        vec2<f32>(1.0, -1.0),
-        vec2<f32>(-1.0, 1.0),
-        vec2<f32>(-1.0, 1.0),
-        vec2<f32>(1.0, -1.0),
-        vec2<f32>(1.0, 1.0)
+        vec2<f32>( 1.0, -1.0),
+        vec2<f32>(-1.0,  1.0),
+        vec2<f32>( 1.0,  1.0)
     );
 
-    var tex = array<vec2<f32>, 6>(
+    let tex = array<vec2<f32>, 4>(
         vec2<f32>(0.0, 1.0),
         vec2<f32>(1.0, 1.0),
         vec2<f32>(0.0, 0.0),
-        vec2<f32>(0.0, 0.0),
-        vec2<f32>(1.0, 1.0),
         vec2<f32>(1.0, 0.0)
     );
 
