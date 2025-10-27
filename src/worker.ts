@@ -1,9 +1,9 @@
 import wasm, {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
-import { NiftiPoint3D, NiftiProperties } from "./types";
+import { NiftiPoint3D, NiftiProperties, NiftiSliceOrientation } from "./types";
 
 type WorkerMessage =
     | {action: 'read-file', file: File}
-    | {action: 'send-file', focalPoint: NiftiPoint3D}
+    | {action: 'send-file', focalPoint: NiftiPoint3D, orientation: NiftiSliceOrientation}
 
 onmessage = async (event: MessageEvent<WorkerMessage>) => {
     await wasm();
@@ -18,7 +18,7 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
             break;
         case 'send-file':
             console.log("Web worker send file.");
-            let slice = send_file(event.data.focalPoint);
+            let slice = send_file(event.data.focalPoint, event.data.orientation);
             console.log(slice);
             postMessage({
                 action: 'send-file',

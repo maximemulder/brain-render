@@ -17,6 +17,7 @@ export default function Pane({state, setState}: {state: ViewerState, setState: (
   worker.postMessage({
     action: 'send-file',
     focalPoint: state.focalPoint,
+    orientation: state.orientation,
   })
 
   const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {

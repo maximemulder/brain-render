@@ -1,5 +1,6 @@
 export type ViewerState = {
   properties: NiftiProperties
+  orientation: NiftiSliceOrientation
   focalPoint: NiftiPoint3D
 }
 
@@ -15,9 +16,16 @@ export type NiftiProperties = {
   slices:  number,
 }
 
+export enum NiftiSliceOrientation {
+  Axial    = 'Axial',
+  Coronal  = 'Coronal',
+  Sagittal = 'Sagittal',
+}
+
 export function createViewerState(properties: NiftiProperties): ViewerState {
   return {
     properties,
+    orientation: NiftiSliceOrientation.Axial,
     focalPoint: {
       x: properties.rows    / 2,
       y: properties.columns / 2,

@@ -28,6 +28,13 @@ pub struct NiftiPoint3D {
     pub z: u16,
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum SliceOrientation {
+    Axial,    // XY plane (constant Z)
+    Coronal,  // XZ plane (constant Y)
+    Sagittal, // YZ plane (constant X)
+}
+
 thread_local! {
     static STATE: RefCell<Option<NiftiWorkerState>> = RefCell::new(None);
 }
@@ -43,14 +50,7 @@ pub async fn read_file(file: File) -> NiftiProperties {
         slices:  dimensions[2],
     };
 
-    /* let mut slices = Vec::new();
-    let mut slices_counter = 0;
-    while volume.slices_left() != 0 {
-        slices.push(volume.read_slice().expect("Could not read slice."));
-        slices_counter += 1;
-    } */
-
-       // Pre-allocate a 3D array for the entire volume
+   // Pre-allocate a 3D array for the entire volume
     let mut volume_array = ndarray::Array3::<f32>::zeros((
         dimensions[0] as usize,
         dimensions[1] as usize,
@@ -85,11 +85,19 @@ pub async fn read_file(file: File) -> NiftiProperties {
 }
 
 impl NiftiWorkerState {
-    pub fn get_slice(&self, slice_index: usize) -> Nifti2DSlice {
+    pub fn get_slice(&self, slice_index: usize, orientation: SliceOrientation) -> Nifti2DSlice {
+        match orientation {
+            SliceOrientation::Axial => self.get_axial_slice(slice_index),
+            SliceOrientation::Coronal => self.get_coronal_slice(slice_index),
+            SliceOrientation::Sagittal => self.get_sagittal_slice(slice_index),
+        }
+    }
+
+    pub fn get_axial_slice(&self, slice_index: usize) -> Nifti2DSlice {
         let width = self.volume.shape()[0];
         let height = self.volume.shape()[1];
 
-        // Extract a 2D slice from the 3D volume
+        // Axial: XY plane at constant Z
         let data = self.volume.slice(ndarray::s![.., .., slice_index]).to_owned();
 
         Nifti2DSlice {
@@ -99,14 +107,57 @@ impl NiftiWorkerState {
         }
     }
 
+    pub fn get_coronal_slice(&self, slice_index: usize) -> Nifti2DSlice {
+        let width = self.volume.shape()[0];
+        let depth = self.volume.shape()[2];
+
+        // Coronal: XZ plane at constant Y
+        // We need to reverse the axes to get proper orientation for display
+        let data = self.volume.slice(ndarray::s![.., slice_index, ..])
+            .reversed_axes()  // This makes it [X, Z] for proper display
+            .to_owned();
+
+        Nifti2DSlice {
+            width: width as u16,
+            height: depth as u16,
+            data
+        }
+    }
+
+    pub fn get_sagittal_slice(&self, slice_index: usize) -> Nifti2DSlice {
+        let height = self.volume.shape()[1];
+        let depth = self.volume.shape()[2];
+
+        // Sagittal: YZ plane at constant X
+        // We need to reverse the axes to get proper orientation for display
+        let data = self.volume.slice(ndarray::s![slice_index, .., ..])
+            .reversed_axes()  // This makes it [Y, Z] for proper display
+            .to_owned();
+
+        Nifti2DSlice {
+            width: height as u16,
+            height: depth as u16,
+            data
+        }
+    }
 }
 
-pub fn send_file(focal_point: NiftiPoint3D) -> JsValue {
+impl NiftiPoint3D {
+    pub fn get_coordinate(self, orientation: SliceOrientation) -> u16 {
+        match orientation {
+            SliceOrientation::Axial    => self.z,
+            SliceOrientation::Coronal  => self.y,
+            SliceOrientation::Sagittal => self.x,
+        }
+    }
+}
+
+pub fn send_file(focal_point: NiftiPoint3D, orientation: SliceOrientation) -> JsValue {
     STATE.with_borrow(|state| {
         let Some(state) = state else {
             return JsValue::NULL;
         };
 
-        state.get_slice(focal_point.z as usize).to_js()
+        state.get_slice(focal_point.get_coordinate(orientation) as usize, orientation).to_js()
     })
 }

@@ -1,8 +1,19 @@
 import { useEffect, useRef } from "react";
-import { NiftiPoint3D, ViewerState } from "./types";
+import { NiftiPoint3D, NiftiSliceOrientation, ViewerState } from "./types";
 import { clamp } from "./util";
 
 export default function Controls({state, setState}: {state: ViewerState, setState: (state: ViewerState) => void}) {
+  const handleOrientationChange = (orientation: NiftiSliceOrientation) => (_: React.MouseEvent<HTMLButtonElement>) => {
+    setState({
+      ...state,
+      orientation
+    });
+  };
+
+  const handleFocalPointChange = (axis: keyof NiftiPoint3D) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateFocalPoint(axis, parseInt(event.target.value));
+  };
+
   const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
     setState({
       ...state,
@@ -13,12 +24,40 @@ export default function Controls({state, setState}: {state: ViewerState, setStat
     });
   };
 
-  const handleFocalPointChange = (axis: keyof NiftiPoint3D) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    updateFocalPoint(axis, parseInt(event.target.value));
-  };
-
   return (
     <div>
+      <div style={{ marginBottom: '1rem' }}>
+        <button
+          onClick={handleOrientationChange(NiftiSliceOrientation.Axial)}
+          style={{
+            fontWeight: state.orientation === NiftiSliceOrientation.Axial ? 'bold' : 'normal',
+            margin: '0 0.25rem',
+            padding: '0.5rem 1rem'
+          }}
+        >
+          Axial
+        </button>
+        <button
+          onClick={handleOrientationChange(NiftiSliceOrientation.Coronal)}
+          style={{
+            fontWeight: state.orientation === NiftiSliceOrientation.Coronal ? 'bold' : 'normal',
+            margin: '0 0.25rem',
+            padding: '0.5rem 1rem'
+          }}
+        >
+          Coronal
+        </button>
+        <button
+          onClick={handleOrientationChange(NiftiSliceOrientation.Sagittal)}
+          style={{
+            fontWeight: state.orientation === NiftiSliceOrientation.Sagittal ? 'bold' : 'normal',
+            margin: '0 0.25rem',
+            padding: '0.5rem 1rem'
+          }}
+        >
+          Sagittal
+        </button>
+      </div>
       <Slider
         id="rows-slider"
         name="Rows"
