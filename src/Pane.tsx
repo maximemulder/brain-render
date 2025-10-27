@@ -4,7 +4,7 @@ import { worker } from "./App";
 import { useEffect, useRef } from "react";
 import { clamp } from "./util";
 
-export default function Pane({state, setState}: {state: ViewerState, setState: (state: ViewerState) => void}) {
+export default function Pane({state, setState}: {state: ViewerState, setState: React.Dispatch<React.SetStateAction<ViewerState | null>>}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   worker.onmessage = async (message: MessageEvent<any>) => {
@@ -21,11 +21,17 @@ export default function Pane({state, setState}: {state: ViewerState, setState: (
   })
 
   const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
-    setState({
-      ...state,
-      focalPoint: {
-        ...state.focalPoint,
-        [axis]: value,
+    setState((state) => {
+      if (state === null) {
+        return null
+      }
+
+      return {
+        ...state,
+        focalPoint: {
+          ...state.focalPoint,
+          [axis]: value,
+        }
       }
     });
   };

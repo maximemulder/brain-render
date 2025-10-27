@@ -2,11 +2,17 @@ import { useEffect, useRef } from "react";
 import { NiftiPoint3D, NiftiSliceOrientation, ViewerState } from "./types";
 import { clamp } from "./util";
 
-export default function Controls({state, setState}: {state: ViewerState, setState: (state: ViewerState) => void}) {
+export default function Controls({state, setState}: {state: ViewerState, setState: React.Dispatch<React.SetStateAction<ViewerState | null>>}) {
   const handleOrientationChange = (orientation: NiftiSliceOrientation) => (_: React.MouseEvent<HTMLButtonElement>) => {
-    setState({
-      ...state,
-      orientation
+    setState((state) => {
+      if (state === null) {
+        return null;
+      }
+
+      return {
+        ...state,
+        orientation
+      }
     });
   };
 
@@ -15,11 +21,17 @@ export default function Controls({state, setState}: {state: ViewerState, setStat
   };
 
   const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
-    setState({
-      ...state,
-      focalPoint: {
-        ...state.focalPoint,
-        [axis]: value,
+    setState((state) => {
+      if (state === null) {
+        return null;
+      }
+
+      return {
+        ...state,
+        focalPoint: {
+          ...state.focalPoint,
+          [axis]: value,
+        }
       }
     });
   };
