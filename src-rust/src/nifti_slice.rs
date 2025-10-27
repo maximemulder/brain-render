@@ -1,5 +1,4 @@
 use ndarray::Array2;
-use nifti::{InMemNiftiVolume, IntoNdArray, NiftiVolume};
 use wasm_bindgen::JsValue;
 
 pub struct Nifti2DSlice {
@@ -81,15 +80,5 @@ impl Nifti2DSlice {
             height,
             data,
         })
-    }
-
-    pub fn from_volume(volume: &InMemNiftiVolume) -> Nifti2DSlice {
-        let width  = volume.dim()[0];
-        let height = volume.dim()[1];
-        let data = volume.into_ndarray::<f32>()
-            .expect("Could not convert to ndarray")
-            .into_dimensionality::<ndarray::Ix2>()
-            .expect("Could not convert to 2D array");
-        Nifti2DSlice { width, height, data }
     }
 }

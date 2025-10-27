@@ -1,17 +1,17 @@
 use std::cell::RefCell;
 
-use nifti::{InMemNiftiVolume, NiftiObject, ReaderStreamedOptions};
+use ndarray::ShapeBuilder;
+use nifti::{NiftiObject, ReaderStreamedOptions};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
 use web_sys::File;
+use nifti::volume::ndarray::IntoNdArray;
 
 use crate::{log, nifti_slice::Nifti2DSlice};
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct NiftiPoint3D {
-    pub x: u16,
-    pub y: u16,
-    pub z: u16,
+pub struct NiftiWorkerState {
+    properties: NiftiProperties,
+    volume: ndarray::Array3<f32>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -21,9 +21,11 @@ pub struct NiftiProperties {
     pub slices:  u16,
 }
 
-pub struct NiftiWorkerState {
-    properties: NiftiProperties,
-    slices: Vec<InMemNiftiVolume>,
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub struct NiftiPoint3D {
+    pub x: u16,
+    pub y: u16,
+    pub z: u16,
 }
 
 thread_local! {
@@ -41,21 +43,62 @@ pub async fn read_file(file: File) -> NiftiProperties {
         slices:  dimensions[2],
     };
 
-    let mut slices = Vec::new();
+    /* let mut slices = Vec::new();
     let mut slices_counter = 0;
     while volume.slices_left() != 0 {
         slices.push(volume.read_slice().expect("Could not read slice."));
+        slices_counter += 1;
+    } */
+
+       // Pre-allocate a 3D array for the entire volume
+    let mut volume_array = ndarray::Array3::<f32>::zeros((
+        dimensions[0] as usize,
+        dimensions[1] as usize,
+        dimensions[2] as usize,
+    ).f());
+
+    let mut slices_counter = 0;
+    while volume.slices_left() != 0 {
+        let slice = volume.read_slice().expect("Could not read slice");
+
+        // Convert the slice to a 2D array and insert it into the 3D volume
+        let slice_array = slice.into_ndarray::<f32>()
+            .expect("Could not convert slice to ndarray")
+            .into_dimensionality::<ndarray::Ix2>()
+            .expect("Could not convert slice to 2D array");
+
+        // Copy the slice data into the appropriate position in the 3D volume
+        volume_array.slice_mut(ndarray::s![.., .., slices_counter])
+            .assign(&slice_array);
+
         slices_counter += 1;
     }
 
     log!("Read {} NIfTI slices.", slices_counter);
 
     STATE.replace(Some(NiftiWorkerState {
-        slices,
+        volume: volume_array,
         properties,
     }));
 
     properties
+}
+
+impl NiftiWorkerState {
+    pub fn get_slice(&self, slice_index: usize) -> Nifti2DSlice {
+        let width = self.volume.shape()[0];
+        let height = self.volume.shape()[1];
+
+        // Extract a 2D slice from the 3D volume
+        let data = self.volume.slice(ndarray::s![.., .., slice_index]).to_owned();
+
+        Nifti2DSlice {
+            width: width as u16,
+            height: height as u16,
+            data
+        }
+    }
+
 }
 
 pub fn send_file(focal_point: NiftiPoint3D) -> JsValue {
@@ -64,6 +107,6 @@ pub fn send_file(focal_point: NiftiPoint3D) -> JsValue {
             return JsValue::NULL;
         };
 
-        Nifti2DSlice::from_volume(&state.slices[focal_point.z as usize]).to_js()
+        state.get_slice(focal_point.z as usize).to_js()
     })
 }
