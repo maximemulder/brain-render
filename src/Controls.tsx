@@ -25,6 +25,20 @@ export default function Controls({state, setState}: {
           setState={setState}
         />
       </div>
+      <Slider
+        id="window-level-slider"
+        name="Window level (brightness)"
+        value={state.window.level}
+        max={state.window.maximum}
+        update={(level) => setState({...state, window: {...state.window, level }})}
+      />
+      <Slider
+        id="window-width-slider"
+        name="Window width (contrast)"
+        value={state.window.width}
+        max={state.window.maximum}
+        update={(width) => setState({...state, window: {...state.window, width }})}
+      />
       <AxisSlider
         axis={AnatomicalAxis.Axial}
         state={state}
@@ -76,12 +90,10 @@ function AxisSlider({axis, state, setState}: {
   state: ViewerState,
   setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const id    = getAxisId(axis);
   const name  = getAxisName(axis);
   const value = getCoordinate(state.focalPoint, axis);
-  const max   = getDimension(state.dimensions, axis);
+  const max   = getDimension(state.dimensions, axis) - 1;
 
   function updateCoordinate(value: number) {
     setState({
@@ -90,9 +102,25 @@ function AxisSlider({axis, state, setState}: {
     });
   }
 
-  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    updateCoordinate(parseInt(event.target.value));
-  };
+  return (
+    <Slider
+      id={id}
+      name={name}
+      value={value}
+      max={max}
+      update={updateCoordinate}
+    />
+  );
+}
+
+function Slider({id, name, value, max, update}: {
+  id: string,
+  name: string,
+  value: number,
+  max: number,
+  update: (value: number) => void,
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const input = inputRef.current;
@@ -106,11 +134,11 @@ function AxisSlider({axis, state, setState}: {
       const delta = Math.sign(event.deltaY); // -1 for scroll up, 1 for scroll down
       const newValue = value - delta; // Invert so scroll up increases, scroll down decreases
 
-      const clampedValue = clamp(0, max - 1, newValue);
+      const clampedValue = clamp(0, max, newValue);
 
       // Only update if the value actually changed
       if (clampedValue !== value) {
-        updateCoordinate(clampedValue);
+        update(clampedValue);
       }
     };
 
@@ -119,17 +147,21 @@ function AxisSlider({axis, state, setState}: {
     return () => {
       input.removeEventListener('wheel', handleWheel);
     };
-  }, [value, max, updateCoordinate]);
+  }, [value, max, update]);
+
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    update(parseInt(event.target.value));
+  };
 
   return (
     <div>
-      <label htmlFor={id}>{name} slice: {value}</label>
+      <label htmlFor={id}>{name}: {value}</label>
       <input
         ref={inputRef}
         id={id}
         type="range"
         min={0}
-        max={max - 1}
+        max={max}
         value={value}
         onChange={handleChange}
       />
@@ -140,11 +172,11 @@ function AxisSlider({axis, state, setState}: {
 function getAxisId(axis: AnatomicalAxis): string {
   switch (axis) {
     case AnatomicalAxis.Axial:
-      return 'axial';
+      return 'axial-slider';
     case AnatomicalAxis.Coronal:
-      return 'coronal';
+      return 'coronal-slider';
     case AnatomicalAxis.Sagittal:
-      return 'sagittal';
+      return 'sagittal-slider';
   }
 }
 

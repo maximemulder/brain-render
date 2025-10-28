@@ -1,7 +1,13 @@
+export type NiftiProperties = {
+  dimensions: VoxelDimensions,
+  maximum: number,
+}
+
 export type ViewerState = {
   dimensions: VoxelDimensions,
   focalPoint: VoxelPoint,
   axis: AnatomicalAxis,
+  window: ViewerWindow,
 }
 
 export type VoxelDimensions = {
@@ -26,15 +32,28 @@ export enum AnatomicalAxis {
   Sagittal = 'Sagittal',
 }
 
-export function createViewerState(dimensions: VoxelDimensions): ViewerState {
+export type ViewerWindow = {
+  maximum: number,
+  level: number,
+  width: number,
+}
+
+export function createViewerState(properties: NiftiProperties): ViewerState {
+  const dimensions = properties.dimensions;
+  console.log(properties.maximum);
   return {
-    dimensions: dimensions,
+    dimensions,
     axis: AnatomicalAxis.Axial,
     focalPoint: {
       x: dimensions.rows    / 2,
       y: dimensions.columns / 2,
       z: dimensions.slices  / 2,
     },
+    window: {
+      maximum: properties.maximum,
+      level: properties.maximum * 0.25,
+      width: properties.maximum * 0.75,
+    }
   };
 }
 

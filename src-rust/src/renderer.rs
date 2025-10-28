@@ -1,6 +1,6 @@
 use web_sys::HtmlCanvasElement;
 
-use crate::{nifti_slice::Nifti2DSlice, renderer::texture::create_texture_from_nifti_slice};
+use crate::{nifti_slice::{Nifti2DSlice, ViewerWindow}, renderer::texture::create_texture_from_nifti_slice};
 
 pub mod texture;
 
@@ -113,8 +113,9 @@ impl Renderer {
     }
 
     // Separate function to update the Nifti slice
-    pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice) {
-        let (new_bind_group, _) = create_texture_from_nifti_slice(&self.device, &self.queue, nifti_slice);
+    pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice, window: ViewerWindow) {
+        crate::log!("WINDOW: {} {}", window.level, window.width);
+        let (new_bind_group, _) = create_texture_from_nifti_slice(&self.device, &self.queue, nifti_slice, window);
         self.bind_group = new_bind_group;
         // Note: We keep the same bind_group_layout since it should be compatible
     }

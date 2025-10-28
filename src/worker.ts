@@ -1,5 +1,5 @@
 import wasm, {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
-import { VoxelDimensions, AnatomicalAxis } from "./types";
+import { AnatomicalAxis, NiftiProperties } from "./types";
 
 type WorkerMessage =
     | {action: 'read-file', file: File}
@@ -10,7 +10,7 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
     switch (event.data.action) {
         case 'read-file':
             console.log("Web worker read file.");
-            let properties: VoxelDimensions = await read_file(event.data.file);
+            let properties: NiftiProperties = await read_file(event.data.file);
             postMessage({
                 action: 'read-file',
                 properties,

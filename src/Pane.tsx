@@ -13,7 +13,7 @@ export default function Pane({state, setState}: {
   worker.onmessage = async (message: MessageEvent<any>) => {
     if (canvasRef.current !== null) {
       await wasm();
-      init_graphics(message.data.slice, canvasRef.current);
+      init_graphics(message.data.slice, state.window, canvasRef.current);
     }
   };
 

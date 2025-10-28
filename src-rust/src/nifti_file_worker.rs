@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use ndarray::ShapeBuilder;
+use ndarray::{Array3, ShapeBuilder};
 use nifti::{NiftiObject, ReaderStreamedOptions};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsValue;
@@ -10,12 +10,17 @@ use nifti::volume::ndarray::IntoNdArray;
 use crate::{log, nifti_slice::Nifti2DSlice};
 
 pub struct NiftiWorkerState {
-    properties: NiftiProperties,
     volume: ndarray::Array3<f32>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct NiftiProperties {
+pub struct NiftiProperies {
+    pub dimensions: VoxelDimensions,
+    pub maximum: f32,
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub struct VoxelDimensions {
     pub rows:    u16,
     pub columns: u16,
     pub slices:  u16,
@@ -29,7 +34,7 @@ pub struct NiftiPoint3D {
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-pub enum SliceOrientation {
+pub enum AnatomicalAxis {
     Axial,    // XY plane (constant Z)
     Coronal,  // XZ plane (constant Y)
     Sagittal, // YZ plane (constant X)
@@ -39,12 +44,13 @@ thread_local! {
     static STATE: RefCell<Option<NiftiWorkerState>> = RefCell::new(None);
 }
 
-pub async fn read_file(file: File) -> NiftiProperties {
+pub async fn read_file(file: File) -> NiftiProperies {
     log!("Starting to read the NIfTI file.");
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
     let mut volume = nifti.into_volume();
     let dimensions = volume.dim();
-    let properties = NiftiProperties {
+
+    let voxel_dimensions = VoxelDimensions {
         rows:    dimensions[0],
         columns: dimensions[1],
         slices:  dimensions[2],
@@ -76,20 +82,28 @@ pub async fn read_file(file: File) -> NiftiProperties {
 
     log!("Read {} NIfTI slices.", slices_counter);
 
+    let maximum = get_max_data_value(&volume_array);
+
     STATE.replace(Some(NiftiWorkerState {
         volume: volume_array,
-        properties,
     }));
 
-    properties
+    NiftiProperies {
+        dimensions: voxel_dimensions,
+        maximum,
+    }
+}
+
+fn get_max_data_value(array: &Array3<f32>) -> f32 {
+    array.fold(0.0, |max, &x| max.max(x))
 }
 
 impl NiftiWorkerState {
-    pub fn get_slice(&self, slice_index: usize, orientation: SliceOrientation) -> Nifti2DSlice {
-        match orientation {
-            SliceOrientation::Axial => self.get_axial_slice(slice_index),
-            SliceOrientation::Coronal => self.get_coronal_slice(slice_index),
-            SliceOrientation::Sagittal => self.get_sagittal_slice(slice_index),
+    pub fn get_slice(&self, slice_index: usize, axis: AnatomicalAxis) -> Nifti2DSlice {
+        match axis {
+            AnatomicalAxis::Axial => self.get_axial_slice(slice_index),
+            AnatomicalAxis::Coronal => self.get_coronal_slice(slice_index),
+            AnatomicalAxis::Sagittal => self.get_sagittal_slice(slice_index),
         }
     }
 
@@ -112,7 +126,7 @@ impl NiftiWorkerState {
         let depth = self.volume.shape()[2];
 
         // Coronal: XZ plane at constant Y
-        // We need to reverse the axes to get proper orientation for display
+        // We need to reverse the axes to get proper axis for display
         let data = self.volume.slice(ndarray::s![.., slice_index, ..])
             .reversed_axes()  // This makes it [X, Z] for proper display
             .to_owned();
@@ -129,7 +143,7 @@ impl NiftiWorkerState {
         let depth = self.volume.shape()[2];
 
         // Sagittal: YZ plane at constant X
-        // We need to reverse the axes to get proper orientation for display
+        // We need to reverse the axes to get proper axis for display
         let data = self.volume.slice(ndarray::s![slice_index, .., ..])
             .reversed_axes()  // This makes it [Y, Z] for proper display
             .to_owned();
@@ -143,21 +157,21 @@ impl NiftiWorkerState {
 }
 
 impl NiftiPoint3D {
-    pub fn get_coordinate(self, orientation: SliceOrientation) -> u16 {
-        match orientation {
-            SliceOrientation::Axial    => self.z,
-            SliceOrientation::Coronal  => self.y,
-            SliceOrientation::Sagittal => self.x,
+    pub fn get_coordinate(self, axis: AnatomicalAxis) -> u16 {
+        match axis {
+            AnatomicalAxis::Axial    => self.z,
+            AnatomicalAxis::Coronal  => self.y,
+            AnatomicalAxis::Sagittal => self.x,
         }
     }
 }
 
-pub fn send_file(orientation: SliceOrientation, coordinate: usize) -> JsValue {
+pub fn send_file(axis: AnatomicalAxis, coordinate: usize) -> JsValue {
     STATE.with_borrow(|state| {
         let Some(state) = state else {
             return JsValue::NULL;
         };
 
-        state.get_slice(coordinate, orientation).to_js()
+        state.get_slice(coordinate, axis).to_js()
     })
 }

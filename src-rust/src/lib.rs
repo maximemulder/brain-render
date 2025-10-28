@@ -19,10 +19,11 @@ thread_local! {
 
 /// Initiate the graphics features.
 #[wasm_bindgen]
-pub async fn init_graphics(slice_js: JsValue, canvas: HtmlCanvasElement) {
+pub async fn init_graphics(js_slice: JsValue, js_window: JsValue, canvas: HtmlCanvasElement) {
     utils::set_panic_hook();
     // Get the slice property
-    let slice = Nifti2DSlice::from_js(&slice_js).expect("Could not re-create slice");
+    let slice = Nifti2DSlice::from_js(&js_slice).expect("could not deserialize slice");
+    let window = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
 
     let initialized = RENDERER.with_borrow(|renderer| renderer.is_some());
     if !initialized {
@@ -32,7 +33,7 @@ pub async fn init_graphics(slice_js: JsValue, canvas: HtmlCanvasElement) {
 
     RENDERER.with_borrow_mut(|renderer| {
         let renderer = renderer.as_mut().expect("renderer not initialized");
-        renderer.update_nifti_slice(slice);
+        renderer.update_nifti_slice(slice, window);
         renderer.render();
     });
 }
@@ -45,9 +46,9 @@ pub async fn read_file(file: File) -> JsValue {
 }
 
 #[wasm_bindgen]
-pub fn send_file(js_orientation: JsValue, js_coordinate: JsValue, ) -> JsValue {
+pub fn send_file(js_axis: JsValue, js_coordinate: JsValue, ) -> JsValue {
     utils::set_panic_hook();
     let coordinate = serde_wasm_bindgen::from_value(js_coordinate).expect("could not deserialize focal point");
-    let orientation = serde_wasm_bindgen::from_value(js_orientation).expect("could not deserialize orientation");
-    nifti_file_worker::send_file(orientation, coordinate)
+    let axis = serde_wasm_bindgen::from_value(js_axis).expect("could not deserialize axis");
+    nifti_file_worker::send_file(axis, coordinate)
 }
