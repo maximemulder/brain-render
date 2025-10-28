@@ -25,7 +25,6 @@ impl Nifti2DSlice {
 
         let (vec, _) = self.data.clone().into_raw_vec_and_offset();
 
-        // let slice = self.data.as_slice().unwrap();
         let array = js_sys::Uint8Array::from(unsafe {std::slice::from_raw_parts(
             vec.as_ptr() as *const u8,
             vec.len() * std::mem::size_of::<f32>(),

@@ -1,108 +1,98 @@
 import { useEffect, useRef } from "react";
-import { NiftiPoint3D, NiftiSliceOrientation, ViewerState } from "./types";
+import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate } from "./types";
 import { clamp } from "./util";
 
-export default function Controls({state, setState}: {state: ViewerState, setState: React.Dispatch<React.SetStateAction<ViewerState | null>>}) {
-  const handleOrientationChange = (orientation: NiftiSliceOrientation) => (_: React.MouseEvent<HTMLButtonElement>) => {
-    setState((state) => {
-      if (state === null) {
-        return null;
-      }
-
-      return {
-        ...state,
-        orientation
-      }
-    });
-  };
-
-  const handleFocalPointChange = (axis: keyof NiftiPoint3D) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    updateFocalPoint(axis, parseInt(event.target.value));
-  };
-
-  const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
-    setState((state) => {
-      if (state === null) {
-        return null;
-      }
-
-      return {
-        ...state,
-        focalPoint: {
-          ...state.focalPoint,
-          [axis]: value,
-        }
-      }
-    });
-  };
-
+export default function Controls({state, setState}: {
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
+}) {
   return (
     <div>
       <div style={{ marginBottom: '1rem' }}>
-        <button
-          onClick={handleOrientationChange(NiftiSliceOrientation.Axial)}
-          style={{
-            fontWeight: state.orientation === NiftiSliceOrientation.Axial ? 'bold' : 'normal',
-            margin: '0 0.25rem',
-            padding: '0.5rem 1rem'
-          }}
-        >
-          Axial
-        </button>
-        <button
-          onClick={handleOrientationChange(NiftiSliceOrientation.Coronal)}
-          style={{
-            fontWeight: state.orientation === NiftiSliceOrientation.Coronal ? 'bold' : 'normal',
-            margin: '0 0.25rem',
-            padding: '0.5rem 1rem'
-          }}
-        >
-          Coronal
-        </button>
-        <button
-          onClick={handleOrientationChange(NiftiSliceOrientation.Sagittal)}
-          style={{
-            fontWeight: state.orientation === NiftiSliceOrientation.Sagittal ? 'bold' : 'normal',
-            margin: '0 0.25rem',
-            padding: '0.5rem 1rem'
-          }}
-        >
-          Sagittal
-        </button>
+        <AxisButton
+          axis={AnatomicalAxis.Axial}
+          state={state}
+          setState={setState}
+        />
+        <AxisButton
+          axis={AnatomicalAxis.Coronal}
+          state={state}
+          setState={setState}
+        />
+        <AxisButton
+          axis={AnatomicalAxis.Sagittal}
+          state={state}
+          setState={setState}
+        />
       </div>
-      <Slider
-        id="rows-slider"
-        name="Rows"
-        max={state.properties.rows - 1}
-        value={state.focalPoint.x}
-        onChange={handleFocalPointChange('x')}
+      <AxisSlider
+        axis={AnatomicalAxis.Axial}
+        state={state}
+        setState={setState}
       />
-      <Slider
-        id="columns-slider"
-        name="Columns"
-        max={state.properties.columns - 1}
-        value={state.focalPoint.y}
-        onChange={handleFocalPointChange('y')}
+      <AxisSlider
+        axis={AnatomicalAxis.Coronal}
+        state={state}
+        setState={setState}
       />
-      <Slider
-        id="slices-slider"
-        name="Slices"
-        max={state.properties.slices - 1}
-        value={state.focalPoint.z}
-        onChange={handleFocalPointChange('z')}
+      <AxisSlider
+        axis={AnatomicalAxis.Sagittal}
+        state={state}
+        setState={setState}
       />
     </div>
   );
 }
 
-function Slider({id, name, max, value, onChange}: {
-  id: string,
-  name: string,
-  max: number,
-  value: number,
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
+function AxisButton({axis, state, setState}: {
+  axis: AnatomicalAxis,
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
+}) {
+  function handleClick() {
+    setState({
+      ...state,
+      axis,
+    });
+  };
+
+  const name  = getAxisName(axis);
+  return (
+    <button
+      onClick={() => handleClick()}
+      style={{
+        fontWeight: state.axis === axis ? 'bold' : 'normal',
+        margin: '0 0.25rem',
+        padding: '0.5rem 1rem'
+      }}
+    >
+      {name}
+    </button>
+  );
+}
+
+function AxisSlider({axis, state, setState}: {
+  axis: AnatomicalAxis,
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const id    = getAxisId(axis);
+  const name  = getAxisName(axis);
+  const value = getCoordinate(state.focalPoint, axis);
+  const max   = getDimension(state.dimensions, axis);
+
+  function updateCoordinate(value: number) {
+    setState({
+      ...state,
+      focalPoint: setCoordinate(state.focalPoint, value, axis),
+    });
+  }
+
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+    updateCoordinate(parseInt(event.target.value));
+  };
 
   useEffect(() => {
     const input = inputRef.current;
@@ -120,29 +110,20 @@ function Slider({id, name, max, value, onChange}: {
 
       // Only update if the value actually changed
       if (clampedValue !== value) {
-        // Create a synthetic React change event
-        const syntheticEvent = {
-          target: {
-            value: clampedValue.toString(),
-          }
-        } as React.ChangeEvent<HTMLInputElement>;
-
-        onChange(syntheticEvent);
+        updateCoordinate(clampedValue);
       }
     };
-
-    console.log("Add event");
 
     input.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       input.removeEventListener('wheel', handleWheel);
     };
-  }, [value, max, onChange]);
+  }, [value, max, updateCoordinate]);
 
   return (
     <div>
-      <label htmlFor={id}>{name}: {value}</label>
+      <label htmlFor={id}>{name} slice: {value}</label>
       <input
         ref={inputRef}
         id={id}
@@ -150,8 +131,30 @@ function Slider({id, name, max, value, onChange}: {
         min={0}
         max={max - 1}
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
       />
     </div>
   );
+}
+
+function getAxisId(axis: AnatomicalAxis): string {
+  switch (axis) {
+    case AnatomicalAxis.Axial:
+      return 'axial';
+    case AnatomicalAxis.Coronal:
+      return 'coronal';
+    case AnatomicalAxis.Sagittal:
+      return 'sagittal';
+  }
+}
+
+function getAxisName(axis: AnatomicalAxis): string {
+  switch (axis) {
+    case AnatomicalAxis.Axial:
+      return 'Axial';
+    case AnatomicalAxis.Coronal:
+      return 'Coronal';
+    case AnatomicalAxis.Sagittal:
+      return 'Sagittal';
+  }
 }

@@ -1,68 +1,73 @@
 export type ViewerState = {
-  properties: NiftiProperties
-  orientation: NiftiSliceOrientation
-  focalPoint: NiftiPoint3D
+  dimensions: VoxelDimensions,
+  focalPoint: VoxelPoint,
+  axis: AnatomicalAxis,
 }
 
-export type NiftiPoint3D = {
-  x: number,
-  y: number,
-  z: number,
-}
-
-export type NiftiProperties = {
+export type VoxelDimensions = {
   rows:    number,
   columns: number,
   slices:  number,
 }
 
-export enum NiftiSliceOrientation {
+export type VoxelDimension = keyof VoxelDimensions;
+
+export type VoxelPoint = {
+  x: number,
+  y: number,
+  z: number,
+}
+
+export type VoxelAxis = keyof VoxelPoint;
+
+export enum AnatomicalAxis {
   Axial    = 'Axial',
   Coronal  = 'Coronal',
   Sagittal = 'Sagittal',
 }
 
-export function createViewerState(properties: NiftiProperties): ViewerState {
+export function createViewerState(dimensions: VoxelDimensions): ViewerState {
   return {
-    properties,
-    orientation: NiftiSliceOrientation.Axial,
+    dimensions: dimensions,
+    axis: AnatomicalAxis.Axial,
     focalPoint: {
-      x: properties.rows    / 2,
-      y: properties.columns / 2,
-      z: properties.slices  / 2,
+      x: dimensions.rows    / 2,
+      y: dimensions.columns / 2,
+      z: dimensions.slices  / 2,
     },
   };
 }
 
-export function getCoordinate(orientation: NiftiSliceOrientation, point: NiftiPoint3D): number {
-  switch (orientation) {
-    case NiftiSliceOrientation.Axial:
-      return point.z;
-    case NiftiSliceOrientation.Coronal:
-      return point.y;
-    case NiftiSliceOrientation.Sagittal:
-      return point.x;
+export function getVoxelDimension(axis: AnatomicalAxis): VoxelDimension {
+  switch (axis) {
+    case AnatomicalAxis.Axial:
+      return 'slices';
+    case AnatomicalAxis.Coronal:
+      return 'columns';
+    case AnatomicalAxis.Sagittal:
+      return 'rows';
   }
 }
 
-export function setCoordinate(orientation: NiftiSliceOrientation, point: NiftiPoint3D, coordinate: number): NiftiPoint3D {
-  switch (orientation) {
-    case NiftiSliceOrientation.Axial:
-      return { ...point, z: coordinate };
-    case NiftiSliceOrientation.Coronal:
-      return { ...point, y: coordinate }
-    case NiftiSliceOrientation.Sagittal:
-      return { ...point, x: coordinate }
+export function getVoxelAxis(axis: AnatomicalAxis): VoxelAxis {
+  switch (axis) {
+    case AnatomicalAxis.Axial:
+      return 'z';
+    case AnatomicalAxis.Coronal:
+      return 'y';
+    case AnatomicalAxis.Sagittal:
+      return 'x';
   }
 }
 
-export function getMaxCoordinate(orientation: NiftiSliceOrientation, properties: NiftiProperties): number {
-  switch (orientation) {
-    case NiftiSliceOrientation.Axial:
-      return properties.slices;
-    case NiftiSliceOrientation.Coronal:
-      return properties.columns;
-    case NiftiSliceOrientation.Sagittal:
-      return properties.rows;
-  }
+export function getDimension(dimensions: VoxelDimensions, axis: AnatomicalAxis): number {
+  return dimensions[getVoxelDimension(axis)];
+}
+
+export function getCoordinate(point: VoxelPoint, axis: AnatomicalAxis): number {
+  return point[getVoxelAxis(axis)];
+}
+
+export function setCoordinate(point: VoxelPoint, coordinate: number, axis: AnatomicalAxis): VoxelPoint {
+  return {...point, [getVoxelAxis(axis)]: coordinate}
 }

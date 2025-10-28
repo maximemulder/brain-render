@@ -1,14 +1,12 @@
 import wasm, { init_graphics } from "../src-rust/pkg/brain_render_backend";
-import { NiftiSliceOrientation } from "./types";
+import { getCoordinate, getDimension, setCoordinate, ViewerState } from "./types";
 import { worker } from "./App";
 import { useEffect, useRef } from "react";
 import { clamp } from "./util";
 
-export default function Pane({orientation, coordinate, maxCoordinate, setCoordinate}: {
-  orientation: NiftiSliceOrientation,
-  coordinate: number,
-  maxCoordinate: number,
-  setCoordinate: (coordinate: number) => void,
+export default function Pane({state, setState}: {
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -21,8 +19,8 @@ export default function Pane({orientation, coordinate, maxCoordinate, setCoordin
 
   worker.postMessage({
     action: 'send-file',
-    orientation,
-    coordinate,
+    axis: state.axis,
+    coordinate: getCoordinate(state.focalPoint, state.axis),
   })
 
   useEffect(() => {
@@ -36,11 +34,14 @@ export default function Pane({orientation, coordinate, maxCoordinate, setCoordin
 
       const delta = Math.sign(event.deltaY); // -1 for scroll up, 1 for scroll down
 
-      const newCoordinate = coordinate - delta; // Invert so scroll up increases, scroll down decreases
+      const newCoordinate = getCoordinate(state.focalPoint, state.axis) - delta; // Invert so scroll up increases, scroll down decreases
 
-      const clampedCoordiante = clamp(0, maxCoordinate - 1, newCoordinate);
+      const clampedCoordiante = clamp(0, getDimension(state.dimensions, state.axis) - 1, newCoordinate);
 
-      setCoordinate(clampedCoordiante);
+      setState({
+        ...state,
+        focalPoint: setCoordinate(state.focalPoint, clampedCoordiante, state.axis),
+      })
     };
 
     // Add the event listener
@@ -50,7 +51,7 @@ export default function Pane({orientation, coordinate, maxCoordinate, setCoordin
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
     };
-  }, [coordinate, maxCoordinate, setCoordinate]);
+  }, [state, setState]);
 
   return (
     <canvas

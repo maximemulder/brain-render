@@ -2,7 +2,7 @@ import "./App.css";
 import {ChangeEvent, useState} from "react";
 import NiftiFileWorker from './worker?worker';
 import Controls from "./Controls";
-import { createViewerState, getCoordinate, getMaxCoordinate, setCoordinate, ViewerState } from "./types";
+import { createViewerState, ViewerState } from "./types";
 import Pane from "./Pane";
 
 /** Web worker that handles the loading and reading of NIfTI files. */
@@ -47,29 +47,12 @@ function App() {
     }
   }
 
-  function updateCoordinate(coordinate: number) {
-    if (state === null) {
-      return;
-    }
-
-    let focalPoint = setCoordinate(state.orientation, state.focalPoint, coordinate);
-    setState({
-      ...state,
-      focalPoint,
-    })
-  }
-
   return (
     <main className="container">
       <h1>Welcome to Brain-Render</h1>
       {state !== null ?
         <>
-          <Pane
-            orientation={state.orientation}
-            coordinate={getCoordinate(state.orientation, state.focalPoint)}
-            maxCoordinate={getMaxCoordinate(state.orientation, state.properties)}
-            setCoordinate={updateCoordinate}
-          />
+          <Pane state={state} setState={setState} />
           <Controls state={state} setState={setState} />
         </>
         : null
