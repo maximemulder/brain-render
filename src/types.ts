@@ -33,3 +33,36 @@ export function createViewerState(properties: NiftiProperties): ViewerState {
     },
   };
 }
+
+export function getCoordinate(orientation: NiftiSliceOrientation, point: NiftiPoint3D): number {
+  switch (orientation) {
+    case NiftiSliceOrientation.Axial:
+      return point.z;
+    case NiftiSliceOrientation.Coronal:
+      return point.y;
+    case NiftiSliceOrientation.Sagittal:
+      return point.x;
+  }
+}
+
+export function setCoordinate(orientation: NiftiSliceOrientation, point: NiftiPoint3D, coordinate: number): NiftiPoint3D {
+  switch (orientation) {
+    case NiftiSliceOrientation.Axial:
+      return { ...point, z: coordinate };
+    case NiftiSliceOrientation.Coronal:
+      return { ...point, y: coordinate }
+    case NiftiSliceOrientation.Sagittal:
+      return { ...point, x: coordinate }
+  }
+}
+
+export function getMaxCoordinate(orientation: NiftiSliceOrientation, properties: NiftiProperties): number {
+  switch (orientation) {
+    case NiftiSliceOrientation.Axial:
+      return properties.slices;
+    case NiftiSliceOrientation.Coronal:
+      return properties.columns;
+    case NiftiSliceOrientation.Sagittal:
+      return properties.rows;
+  }
+}

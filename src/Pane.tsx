@@ -1,10 +1,15 @@
 import wasm, { init_graphics } from "../src-rust/pkg/brain_render_backend";
-import { NiftiPoint3D, ViewerState } from "./types";
+import { NiftiSliceOrientation } from "./types";
 import { worker } from "./App";
 import { useEffect, useRef } from "react";
 import { clamp } from "./util";
 
-export default function Pane({state, setState}: {state: ViewerState, setState: React.Dispatch<React.SetStateAction<ViewerState | null>>}) {
+export default function Pane({orientation, coordinate, maxCoordinate, setCoordinate}: {
+  orientation: NiftiSliceOrientation,
+  coordinate: number,
+  maxCoordinate: number,
+  setCoordinate: (coordinate: number) => void,
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   worker.onmessage = async (message: MessageEvent<any>) => {
@@ -16,25 +21,9 @@ export default function Pane({state, setState}: {state: ViewerState, setState: R
 
   worker.postMessage({
     action: 'send-file',
-    focalPoint: state.focalPoint,
-    orientation: state.orientation,
+    orientation,
+    coordinate,
   })
-
-  const updateFocalPoint = (axis: keyof NiftiPoint3D, value: number) => {
-    setState((state) => {
-      if (state === null) {
-        return null
-      }
-
-      return {
-        ...state,
-        focalPoint: {
-          ...state.focalPoint,
-          [axis]: value,
-        }
-      }
-    });
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -46,12 +35,12 @@ export default function Pane({state, setState}: {state: ViewerState, setState: R
       event.preventDefault();
 
       const delta = Math.sign(event.deltaY); // -1 for scroll up, 1 for scroll down
-      const newZ = state.focalPoint.z - delta; // Invert so scroll up increases, scroll down decreases
 
-      const clampedZ = clamp(0, state.properties.slices - 1, newZ);
+      const newCoordinate = coordinate - delta; // Invert so scroll up increases, scroll down decreases
 
-      // Only update if the value actually changed
-      updateFocalPoint('z', clampedZ);
+      const clampedCoordiante = clamp(0, maxCoordinate - 1, newCoordinate);
+
+      setCoordinate(clampedCoordiante);
     };
 
     // Add the event listener
@@ -61,7 +50,7 @@ export default function Pane({state, setState}: {state: ViewerState, setState: R
     return () => {
       canvas.removeEventListener('wheel', handleWheel);
     };
-  }, [state.focalPoint.z, state.properties.slices]); // Dependencies for the effect
+  }, [coordinate, maxCoordinate, setCoordinate]);
 
   return (
     <canvas

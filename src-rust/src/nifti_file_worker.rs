@@ -152,12 +152,12 @@ impl NiftiPoint3D {
     }
 }
 
-pub fn send_file(focal_point: NiftiPoint3D, orientation: SliceOrientation) -> JsValue {
+pub fn send_file(orientation: SliceOrientation, coordinate: usize) -> JsValue {
     STATE.with_borrow(|state| {
         let Some(state) = state else {
             return JsValue::NULL;
         };
 
-        state.get_slice(focal_point.get_coordinate(orientation) as usize, orientation).to_js()
+        state.get_slice(coordinate, orientation).to_js()
     })
 }

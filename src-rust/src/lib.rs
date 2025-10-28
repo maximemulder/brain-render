@@ -45,9 +45,9 @@ pub async fn read_file(file: File) -> JsValue {
 }
 
 #[wasm_bindgen]
-pub fn send_file(js_focal_point: JsValue, js_orientation: JsValue) -> JsValue {
+pub fn send_file(js_orientation: JsValue, js_coordinate: JsValue, ) -> JsValue {
     utils::set_panic_hook();
-    let focal_point = serde_wasm_bindgen::from_value(js_focal_point).expect("could not deserialize focal point");
+    let coordinate = serde_wasm_bindgen::from_value(js_coordinate).expect("could not deserialize focal point");
     let orientation = serde_wasm_bindgen::from_value(js_orientation).expect("could not deserialize orientation");
-    nifti_file_worker::send_file(focal_point, orientation)
+    nifti_file_worker::send_file(orientation, coordinate)
 }
