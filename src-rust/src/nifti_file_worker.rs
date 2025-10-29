@@ -10,7 +10,7 @@ use nifti::volume::ndarray::IntoNdArray;
 use crate::{log, nifti_slice::Nifti2DSlice};
 
 pub struct NiftiWorkerState {
-    volume: ndarray::Array3<f32>,
+    pub volume: ndarray::Array3<f32>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -35,9 +35,9 @@ pub struct NiftiPoint3D {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum AnatomicalAxis {
-    Axial,    // XY plane (constant Z)
-    Coronal,  // XZ plane (constant Y)
-    Sagittal, // YZ plane (constant X)
+    Axial    = 0,    // XY plane (constant Z)
+    Coronal  = 1,  // XZ plane (constant Y)
+    Sagittal = 2, // YZ plane (constant X)
 }
 
 thread_local! {

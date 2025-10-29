@@ -1,6 +1,7 @@
+use ndarray::Array3;
 use web_sys::OffscreenCanvas;
 
-use crate::{nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
+use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
 
 pub mod texture;
 
@@ -12,6 +13,7 @@ pub struct Renderer {
     render_pipeline: wgpu::RenderPipeline,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: Option<wgpu::BindGroup>,
+    pub texture_view: Option<wgpu::TextureView>,
 }
 
 impl Renderer {
@@ -109,12 +111,13 @@ impl Renderer {
             render_pipeline,
             bind_group_layout,
             bind_group: None,
+            texture_view: None,
         }
     }
 
     // Separate function to update the Nifti slice
-    pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice, window: DisplayWindow) {
-        self.bind_group = Some(create_texture_from_nifti_slice(&self, nifti_slice, window));
+    pub fn update_nifti_slice(&mut self, volume: &Array3<f32>, window: DisplayWindow, coordinate: usize, axis: AnatomicalAxis) {
+        self.bind_group = Some(create_texture_from_nifti_slice(self, volume, window, axis, coordinate as u32));
     }
 
     pub fn render(&mut self) {

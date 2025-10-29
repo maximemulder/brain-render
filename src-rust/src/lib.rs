@@ -45,7 +45,10 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
             return;
         };
 
-        renderer.update_nifti_slice(slice, window);
+        STATE.with_borrow(|state| {
+            let state = state.as_ref().expect("volume not initialized");
+            renderer.update_nifti_slice(&state.volume, window, coordinate, axis);
+        });
         renderer.render();
     });
 }
