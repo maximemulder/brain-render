@@ -1,6 +1,6 @@
 use web_sys::HtmlCanvasElement;
 
-use crate::{nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::create_texture_from_nifti_slice};
+use crate::{nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
 
 pub mod texture;
 
@@ -10,8 +10,8 @@ pub struct Renderer {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
-    bind_group: wgpu::BindGroup,
     bind_group_layout: wgpu::BindGroupLayout,
+    bind_group: Option<wgpu::BindGroup>,
 }
 
 impl Renderer {
@@ -47,7 +47,7 @@ impl Renderer {
             .expect("Failed to create device");
 
         // Create initial empty bind group and layout
-        let (bind_group, bind_group_layout) = create_empty_bind_group(&device);
+        let bind_group_layout = create_bind_group_layout(&device);
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
@@ -107,15 +107,14 @@ impl Renderer {
             queue,
             config,
             render_pipeline,
-            bind_group,
             bind_group_layout,
+            bind_group: None,
         }
     }
 
     // Separate function to update the Nifti slice
     pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice, window: DisplayWindow) {
-        crate::log!("WINDOW: {} {}", window.level, window.width);
-        self.bind_group = create_texture_from_nifti_slice(&self, nifti_slice, window);
+        self.bind_group = Some(create_texture_from_nifti_slice(&self, nifti_slice, window));
     }
 
     pub fn render(&mut self) {
@@ -123,7 +122,7 @@ impl Renderer {
             .surface
             .get_current_texture()
             .expect("Failed to acquire next swap chain texture");
-        let view = frame
+        let view: wgpu::TextureView = frame
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
         let mut encoder = self
@@ -153,98 +152,4 @@ impl Renderer {
         self.queue.submit(Some(encoder.finish()));
         frame.present();
     }
-}
-
-// Helper function to create an empty bind group (for initialization)
-fn create_empty_bind_group(device: &wgpu::Device) -> (wgpu::BindGroup, wgpu::BindGroupLayout) {
-    // Create a simple 1x1 black texture as placeholder
-    let texture_size = wgpu::Extent3d {
-        width: 1,
-        height: 1,
-        depth_or_array_layers: 1,
-    };
-
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("empty_texture"),
-        size: texture_size,
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::R32Float,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-        view_formats: &[],
-    });
-
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-    let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-        address_mode_u: wgpu::AddressMode::ClampToEdge,
-        address_mode_v: wgpu::AddressMode::ClampToEdge,
-        address_mode_w: wgpu::AddressMode::ClampToEdge,
-        mag_filter: wgpu::FilterMode::Nearest,
-        min_filter: wgpu::FilterMode::Nearest,
-        mipmap_filter: wgpu::FilterMode::Nearest,
-        ..Default::default()
-    });
-
-    // Create a default uniform buffer with [0.0, 1.0] range
-    let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("empty_window_uniform_buffer"),
-        size: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("texture_bind_group_layout"),
-        entries: &[
-            wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Texture {
-                    multisampled: false,
-                    view_dimension: wgpu::TextureViewDimension::D2,
-                    sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                },
-                count: None,
-            },
-            wgpu::BindGroupLayoutEntry {
-                binding: 1,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
-                count: None,
-            },
-            wgpu::BindGroupLayoutEntry {
-                binding: 2,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
-        ],
-    });
-
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: Some("empty_bind_group"),
-        layout: &bind_group_layout,
-        entries: &[
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(&view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Sampler(&sampler),
-            },
-            wgpu::BindGroupEntry {
-                binding: 2,
-                resource: uniform_buffer.as_entire_binding(),
-            },
-        ],
-    });
-
-    (bind_group, bind_group_layout)
 }
