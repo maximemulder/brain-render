@@ -1,4 +1,4 @@
-import wasm, {init_renderer, read_file, render_slice, send_file} from "../src-rust/pkg/brain_render_backend";
+import wasm, {init_renderer, read_file, render_slice} from "../src-rust/pkg/brain_render_backend";
 import { AnatomicalAxis, NiftiProperties, DisplayWindow } from "./types";
 
 type WorkerMessage =
@@ -23,8 +23,7 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
       break;
     case 'render-slice':
       console.debug("[web-worker] render slice");
-      let slice = send_file(event.data.axis, event.data.coordinate);
-      render_slice(slice, event.data.window);
+      render_slice(event.data.axis, event.data.coordinate, event.data.window);
   }
 }
 

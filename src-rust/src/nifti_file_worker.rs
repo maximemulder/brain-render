@@ -41,7 +41,7 @@ pub enum AnatomicalAxis {
 }
 
 thread_local! {
-    static STATE: RefCell<Option<NiftiWorkerState>> = RefCell::new(None);
+    pub static STATE: RefCell<Option<NiftiWorkerState>> = RefCell::new(None);
 }
 
 pub async fn read_file(file: File) -> NiftiProperies {
@@ -112,7 +112,9 @@ impl NiftiWorkerState {
         let height = self.volume.shape()[1];
 
         // Axial: XY plane at constant Z
-        let data = self.volume.slice(ndarray::s![.., .., slice_index]).to_owned();
+        let data = self.volume.slice(ndarray::s![.., .., slice_index])
+            .reversed_axes()
+            .to_owned();
 
         Nifti2DSlice {
             width: width as u16,

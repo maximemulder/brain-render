@@ -1,5 +1,18 @@
 use crate::{Nifti2DSlice, nifti_slice::DisplayWindow, renderer::Renderer};
 
+// TODO: Move slicing to the GPU.
+fn slice_to_bytes(nifti_slice: &Nifti2DSlice) -> Vec<u8> {
+    // Try the fast path first (contiguous data)
+    if let Some(slice) = nifti_slice.data.as_slice() {
+        return bytemuck::cast_slice::<f32, u8>(slice).to_vec();
+    }
+
+    // Fallback: copy and convert
+    nifti_slice.data.iter()
+        .flat_map(|&value| bytemuck::bytes_of(&value).to_vec())
+        .collect()
+}
+
 pub fn create_texture_from_nifti_slice(renderer: &Renderer, nifti_slice: Nifti2DSlice, window: DisplayWindow) -> wgpu::BindGroup {
     let texture_size = wgpu::Extent3d {
         width:  nifti_slice.width as u32,
@@ -18,6 +31,8 @@ pub fn create_texture_from_nifti_slice(renderer: &Renderer, nifti_slice: Nifti2D
         view_formats: &[],
     });
 
+    let bytes = slice_to_bytes(&nifti_slice);
+
     renderer.queue.write_texture(
         wgpu::TexelCopyTextureInfo {
             texture: &texture,
@@ -25,7 +40,7 @@ pub fn create_texture_from_nifti_slice(renderer: &Renderer, nifti_slice: Nifti2D
             origin: wgpu::Origin3d::ZERO,
             aspect: wgpu::TextureAspect::All,
         },
-        bytemuck::cast_slice(&nifti_slice.data.as_slice().expect("Could not slice ndarray")), // Convert f32 slice to bytes
+        &bytes,
         wgpu::TexelCopyBufferLayout {
             offset: 0,
             bytes_per_row: Some(4 * nifti_slice.width as u32), // 4 bytes per f32
@@ -33,6 +48,7 @@ pub fn create_texture_from_nifti_slice(renderer: &Renderer, nifti_slice: Nifti2D
         },
         texture_size,
     );
+
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
     let sampler = renderer.device.create_sampler(&wgpu::SamplerDescriptor {
