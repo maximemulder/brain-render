@@ -1,6 +1,6 @@
 use web_sys::HtmlCanvasElement;
 
-use crate::{nifti_slice::{Nifti2DSlice, ViewerWindow}, renderer::texture::create_texture_from_nifti_slice};
+use crate::{nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::create_texture_from_nifti_slice};
 
 pub mod texture;
 
@@ -113,11 +113,9 @@ impl Renderer {
     }
 
     // Separate function to update the Nifti slice
-    pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice, window: ViewerWindow) {
+    pub fn update_nifti_slice(&mut self, nifti_slice: Nifti2DSlice, window: DisplayWindow) {
         crate::log!("WINDOW: {} {}", window.level, window.width);
-        let (new_bind_group, _) = create_texture_from_nifti_slice(&self.device, &self.queue, nifti_slice, window);
-        self.bind_group = new_bind_group;
-        // Note: We keep the same bind_group_layout since it should be compatible
+        self.bind_group = create_texture_from_nifti_slice(&self, nifti_slice, window);
     }
 
     pub fn render(&mut self) {
@@ -172,7 +170,7 @@ fn create_empty_bind_group(device: &wgpu::Device) -> (wgpu::BindGroup, wgpu::Bin
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::R8Unorm,
+        format: wgpu::TextureFormat::R32Float,
         usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
         view_formats: &[],
     });
@@ -183,10 +181,18 @@ fn create_empty_bind_group(device: &wgpu::Device) -> (wgpu::BindGroup, wgpu::Bin
         address_mode_u: wgpu::AddressMode::ClampToEdge,
         address_mode_v: wgpu::AddressMode::ClampToEdge,
         address_mode_w: wgpu::AddressMode::ClampToEdge,
-        mag_filter: wgpu::FilterMode::Linear,
-        min_filter: wgpu::FilterMode::Linear,
+        mag_filter: wgpu::FilterMode::Nearest,
+        min_filter: wgpu::FilterMode::Nearest,
         mipmap_filter: wgpu::FilterMode::Nearest,
         ..Default::default()
+    });
+
+    // Create a default uniform buffer with [0.0, 1.0] range
+    let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("empty_window_uniform_buffer"),
+        size: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
     });
 
     let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -198,14 +204,24 @@ fn create_empty_bind_group(device: &wgpu::Device) -> (wgpu::BindGroup, wgpu::Bin
                 ty: wgpu::BindingType::Texture {
                     multisampled: false,
                     view_dimension: wgpu::TextureViewDimension::D2,
-                    sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                    sample_type: wgpu::TextureSampleType::Float { filterable: false },
                 },
                 count: None,
             },
             wgpu::BindGroupLayoutEntry {
                 binding: 1,
                 visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                count: None,
+            },
+            wgpu::BindGroupLayoutEntry {
+                binding: 2,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
                 count: None,
             },
         ],
@@ -222,6 +238,10 @@ fn create_empty_bind_group(device: &wgpu::Device) -> (wgpu::BindGroup, wgpu::Bin
             wgpu::BindGroupEntry {
                 binding: 1,
                 resource: wgpu::BindingResource::Sampler(&sampler),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: uniform_buffer.as_entire_binding(),
             },
         ],
     });

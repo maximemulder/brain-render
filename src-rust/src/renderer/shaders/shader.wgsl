@@ -29,8 +29,20 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
 var texture: texture_2d<f32>;
 @group(0) @binding(1)
 var texture_sampler: sampler;
+@group(0) @binding(2)
+var<uniform> window_params: vec2<f32>;
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(texture, texture_sampler, input.tex_coords);
+    // Get the raw pixel intensity from the NIfTI slice.
+    let raw_value = textureSample(texture, texture_sampler, input.tex_coords).r;
+
+    // Normalize the value based on window parameters
+    let normalized_value = (raw_value - window_params.x) / (window_params.y - window_params.x);
+
+    // Clamp the normalized value into a grayscale value.
+    let grayscale_value = clamp(normalized_value, 0.0, 1.0);
+
+    // Return the pixel as an RGBA value.
+    return vec4<f32>(grayscale_value, grayscale_value, grayscale_value, 1.0);
 }

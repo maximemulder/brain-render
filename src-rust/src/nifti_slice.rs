@@ -9,26 +9,18 @@ pub struct Nifti2DSlice {
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct ViewerWindow {
+pub struct DisplayWindow {
     pub level: f32,
     pub width: f32,
 }
 
-impl ViewerWindow {
-    pub fn apply(&self, intensity: f32) -> u8 {
-        let window_min = self.level - self.width / 2.0;
-        let window_max = self.level + self.width / 2.0;
+impl DisplayWindow {
+    pub fn min(&self) -> f32 {
+        self.level - self.width / 2.0
+    }
 
-        // Clamp and normalize the value
-        if intensity <= window_min {
-            0 // Black
-        } else if intensity >= window_max {
-            255 // White
-        } else {
-            // Linear mapping from [window_min, window_max] to [0, 255]
-            let normalized = (intensity - window_min) / self.width;
-            (normalized * 255.0).round() as u8
-        }
+    pub fn max(&self) -> f32 {
+        self.level + self.width / 2.0
     }
 }
 
