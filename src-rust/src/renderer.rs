@@ -1,4 +1,4 @@
-use web_sys::HtmlCanvasElement;
+use web_sys::OffscreenCanvas;
 
 use crate::{nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
 
@@ -15,11 +15,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub async fn new(canvas: HtmlCanvasElement) -> Self {
+    pub async fn new(canvas: OffscreenCanvas) -> Self {
         let x = canvas.width();
         let y = canvas.height();
         let instance = wgpu::Instance::default();
-        let surface = wgpu::SurfaceTarget::Canvas(canvas);
+        let surface = wgpu::SurfaceTarget::OffscreenCanvas(canvas);
         let surface = instance.create_surface(surface).expect("Failed to create surface");
 
         let adapter = instance

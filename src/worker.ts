@@ -1,31 +1,31 @@
-import wasm, {read_file, send_file} from "../src-rust/pkg/brain_render_backend";
-import { AnatomicalAxis, NiftiProperties } from "./types";
+import wasm, {init_renderer, read_file, render_slice, send_file} from "../src-rust/pkg/brain_render_backend";
+import { AnatomicalAxis, NiftiProperties, DisplayWindow } from "./types";
 
 type WorkerMessage =
-    | {action: 'read-file', file: File}
-    | {action: 'send-file', axis: AnatomicalAxis, coordinate: number}
+  | {action: 'init-renderer', canvas: OffscreenCanvas}
+  | {action: 'read-file', file: File}
+  | {action: 'render-slice', window: DisplayWindow, axis: AnatomicalAxis, coordinate: number}
 
 onmessage = async (event: MessageEvent<WorkerMessage>) => {
-    await wasm();
-    switch (event.data.action) {
-        case 'read-file':
-            console.log("Web worker read file.");
-            let properties: NiftiProperties = await read_file(event.data.file);
-            postMessage({
-                action: 'read-file',
-                properties,
-            });
-            break;
-        case 'send-file':
-            console.log("Web worker send file.");
-            let slice = send_file(event.data.axis, event.data.coordinate);
-            console.log(slice);
-            postMessage({
-                action: 'send-file',
-                slice,
-            });
-            break;
-    }
+  await wasm();
+  switch (event.data.action) {
+    case 'init-renderer':
+      console.debug("[web-worker] initialize renderer");
+      init_renderer(event.data.canvas);
+      break;
+    case 'read-file':
+      console.debug("[web-worker] read nifti file");
+      let properties: NiftiProperties = await read_file(event.data.file);
+      postMessage({
+        action: 'read-file',
+        properties,
+      });
+      break;
+    case 'render-slice':
+      console.debug("[web-worker] render slice");
+      let slice = send_file(event.data.axis, event.data.coordinate);
+      render_slice(slice, event.data.window);
+  }
 }
 
 export {};

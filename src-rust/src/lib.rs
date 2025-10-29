@@ -8,7 +8,7 @@ mod web;
 use std::cell::RefCell;
 
 use wasm_bindgen::prelude::*;
-use web_sys::{File, HtmlCanvasElement};
+use web_sys::{File, OffscreenCanvas};
 
 use crate::nifti_slice::Nifti2DSlice;
 use crate::renderer::Renderer;
@@ -17,22 +17,28 @@ thread_local! {
   static RENDERER: RefCell<Option<Renderer>> = RefCell::new(None);
 }
 
+/// Initiate the renderer.
+#[wasm_bindgen]
+pub async fn init_renderer(canvas: OffscreenCanvas) {
+    utils::set_panic_hook();
+    let renderer = Renderer::new(canvas).await;
+    RENDERER.replace(Some(renderer));
+}
+
 /// Initiate the graphics features.
 #[wasm_bindgen]
-pub async fn init_graphics(js_slice: JsValue, js_window: JsValue, canvas: HtmlCanvasElement) {
+pub async fn render_slice(js_slice: JsValue, js_window: JsValue) {
     utils::set_panic_hook();
     // Get the slice property
     let slice = Nifti2DSlice::from_js(&js_slice).expect("could not deserialize slice");
     let window = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
 
-    let initialized = RENDERER.with_borrow(|renderer| renderer.is_some());
-    if !initialized {
-        let renderer = Renderer::new(canvas).await;
-        RENDERER.replace(Some(renderer));
-    }
-
     RENDERER.with_borrow_mut(|renderer| {
-        let renderer = renderer.as_mut().expect("renderer not initialized");
+        let Some(renderer) = renderer.as_mut() else {
+            log!("renderer not initialized yet");
+            return;
+        };
+
         renderer.update_nifti_slice(slice, window);
         renderer.render();
     });

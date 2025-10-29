@@ -7,7 +7,7 @@ export type ViewerState = {
   dimensions: VoxelDimensions,
   focalPoint: VoxelPoint,
   axis: AnatomicalAxis,
-  window: ViewerWindow,
+  window: DisplayWindow,
 }
 
 export type VoxelDimensions = {
@@ -32,15 +32,13 @@ export enum AnatomicalAxis {
   Sagittal = 'Sagittal',
 }
 
-export type ViewerWindow = {
+export type DisplayWindow = {
   maximum: number,
   level: number,
   width: number,
 }
 
-export function createViewerState(properties: NiftiProperties): ViewerState {
-  const dimensions = properties.dimensions;
-  console.log(properties.maximum);
+export function createViewerState({dimensions, maximum}: NiftiProperties): ViewerState {
   return {
     dimensions,
     axis: AnatomicalAxis.Axial,
@@ -50,9 +48,9 @@ export function createViewerState(properties: NiftiProperties): ViewerState {
       z: dimensions.slices  / 2,
     },
     window: {
-      maximum: properties.maximum,
-      level: properties.maximum * 0.25,
-      width: properties.maximum * 0.75,
+      maximum: maximum,
+      level:   maximum * 0.25,
+      width:   maximum * 0.5,
     }
   };
 }

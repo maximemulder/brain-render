@@ -1,31 +1,48 @@
-import wasm, { init_graphics } from "../src-rust/pkg/brain_render_backend";
 import { getCoordinate, getDimension, setCoordinate, ViewerState } from "./types";
 import { worker } from "./App";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { clamp } from "./util";
 
 export default function Pane({state, setState}: {
   state: ViewerState,
   setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  worker.onmessage = async (message: MessageEvent<any>) => {
-    if (canvasRef.current !== null) {
-      await wasm();
-      init_graphics(message.data.slice, state.window, canvasRef.current);
-    }
-  };
-
+  // TODO: Clean render request strategy.
   worker.postMessage({
-    action: 'send-file',
+    action: 'render-slice',
     axis: state.axis,
     coordinate: getCoordinate(state.focalPoint, state.axis),
-  })
+    window: state.window,
+  });
+
+  const canvasRef = useCallback((canvasRef: HTMLCanvasElement | null) => {
+    if (canvasRef === null) {
+      return;
+    }
+
+    const offscreen = canvasRef.transferControlToOffscreen();
+    worker.postMessage({
+      action: 'init-renderer',
+      canvas: offscreen
+    }, [offscreen]);
+
+    // Send a render request immediatly to not have an empty screen.
+    // FIXME: Do something cleaner.
+    setTimeout(() => {
+      worker.postMessage({
+        action: 'render-slice',
+        axis: state.axis,
+        coordinate: getCoordinate(state.focalPoint, state.axis),
+        window: state.window,
+      });
+    }, 100);
+  }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas === null) {
+    const wrapper = wrapperRef.current;
+    if (wrapper === null) {
       return;
     }
 
@@ -45,18 +62,22 @@ export default function Pane({state, setState}: {
     };
 
     // Add the event listener
-    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    wrapper.addEventListener('wheel', handleWheel, { passive: false });
 
     // Cleanup function to remove the event listener
     return () => {
-      canvas.removeEventListener('wheel', handleWheel);
+      wrapper.removeEventListener('wheel', handleWheel);
     };
   }, [state, setState]);
 
   return (
-    <canvas
-      id="canvas"
-      ref={canvasRef}
-    />
+    <div ref={wrapperRef} style={{width: 'fit-content', height: 'fit-content'}}>
+      <canvas
+        id="canvas"
+        ref={canvasRef}
+        width={800}
+        height={800}
+      />
+    </div>
   );
 }
