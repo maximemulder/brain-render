@@ -13,6 +13,8 @@ async function getDemoFiles() {
     query: '?url',
   });
 
+  console.log(files);
+
   const demoFiles: DemoFile[] = [];
 
   for (const path in files) {
@@ -29,6 +31,8 @@ async function getDemoFiles() {
       url,
     });
   }
+
+  console.log(demoFiles);
 
   return demoFiles;
 }
