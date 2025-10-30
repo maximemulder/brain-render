@@ -21,9 +21,8 @@ async function getDemoFiles() {
     const url = path;
 
     const response = await fetch(url, { method: 'HEAD' });
-    const contentEncoding = response.headers.get('content-encoding');
-    const contentLength = response.headers.get(contentEncoding ? 'x-file-size' : 'content-length');
 
+    const contentLength = response.headers.get('content-length');
     const size = contentLength ? parseInt(contentLength, 10) : 0;
 
     demoFiles.push({
@@ -32,8 +31,6 @@ async function getDemoFiles() {
       url,
     });
   }
-
-  console.log(demoFiles);
 
   return demoFiles;
 }
@@ -77,7 +74,7 @@ export default function FileLoader({onFileLoaded}: {onFileLoaded: (file: File) =
         return;
       }
 
-      const total = parseInt(contentLength, 10);
+      const total = file.size
       let loaded = 0;
 
       const reader = response.body.getReader();
