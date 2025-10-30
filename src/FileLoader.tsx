@@ -21,7 +21,9 @@ async function getDemoFiles() {
     const url = path;
 
     const response = await fetch(url, { method: 'HEAD' });
-    const contentLength = response.headers.get('content-length');
+    const contentEncoding = response.headers.get('content-encoding');
+    const contentLength = response.headers.get(contentEncoding ? 'x-file-size' : 'content-length');
+
     const size = contentLength ? parseInt(contentLength, 10) : 0;
 
     demoFiles.push({
