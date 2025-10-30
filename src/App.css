@@ -16,6 +16,7 @@
 }
 
 :root, body, #root, #app {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -30,6 +31,27 @@
 
 .app-title {
   text-align: center;
+}
+
+.loader {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.file-loader {
+  width: 500px;
+  margin-bottom: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2em;
+}
+
+.demo-files, .custom-file {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 .viewer {
