@@ -2,7 +2,7 @@ use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SliceParams {
+pub struct FragmentParams {
     pub volume_dims: [f32; 3],
     /// Padding for WebGPU alignment.
     pub padding: u32,
@@ -11,7 +11,7 @@ pub struct SliceParams {
     pub slice_index: f32,
 }
 
-impl SliceParams {
+impl FragmentParams {
     pub fn new(
         volume_dimensions: [usize; 3],
         axis: AnatomicalAxis,
@@ -32,13 +32,13 @@ impl SliceParams {
                 volume_dimensions[1] as f32,
                 volume_dimensions[2] as f32,
             ],
-            axis: axis as u32,
-            slice_index: normalized_slice_index,
             padding: 0,
             window: [
                 window.min(),
                 window.max(),
             ],
+            axis: axis as u32,
+            slice_index: normalized_slice_index,
         }
     }
 }

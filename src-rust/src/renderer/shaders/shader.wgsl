@@ -25,20 +25,20 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     return output;
 }
 
-@group(0) @binding(0)
-var volume_texture: texture_3d<f32>;
-@group(0) @binding(1)
-var volume_sampler: sampler;
-@group(0) @binding(2)
-var<uniform> params: SliceParams;
-
-struct SliceParams {
+struct FragmentParams {
     volume_dims: vec3<f32>,
     padding: u32,
     window: vec2<f32>,
     axis: u32,
     slice_index: f32,
 }
+
+@group(0) @binding(0)
+var volume_texture: texture_3d<f32>;
+@group(0) @binding(1)
+var volume_sampler: sampler;
+@group(0) @binding(2)
+var<uniform> params: FragmentParams;
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
@@ -57,7 +57,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(grayscale_value, grayscale_value, grayscale_value, 1.0);
 }
 
-fn get_voxel_coords(tex_coords: vec2<f32>, params: SliceParams) -> vec3<f32> {
+fn get_voxel_coords(tex_coords: vec2<f32>, params: FragmentParams) -> vec3<f32> {
     var coords = vec3<f32>(tex_coords, 0.0);
 
     switch params.axis {

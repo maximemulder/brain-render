@@ -34,8 +34,8 @@ pub struct NiftiPoint3D {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum AnatomicalAxis {
-    Axial    = 0,    // XY plane (constant Z)
-    Coronal  = 1,  // XZ plane (constant Y)
+    Axial    = 0, // XY plane (constant Z)
+    Coronal  = 1, // XZ plane (constant Y)
     Sagittal = 2, // YZ plane (constant X)
 }
 

@@ -11,7 +11,6 @@ use wasm_bindgen::prelude::*;
 use web_sys::{File, OffscreenCanvas};
 
 use crate::nifti_file_worker::STATE;
-use crate::nifti_slice::Nifti2DSlice;
 use crate::renderer::Renderer;
 
 thread_local! {
@@ -34,10 +33,6 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
     let axis = serde_wasm_bindgen::from_value(js_axis).expect("could not deserialize axis");
     let coordinate = serde_wasm_bindgen::from_value(js_coordinate).expect("could not deserialize coordinate");
     let window: nifti_slice::DisplayWindow = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
-
-    let slice = STATE.with_borrow(|state| {
-        state.as_ref().expect("nifti file missing").get_slice(coordinate, axis)
-    });
 
     RENDERER.with_borrow_mut(|renderer| {
         let Some(renderer) = renderer.as_mut() else {

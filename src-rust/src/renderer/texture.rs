@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::{Renderer, params::SliceParams}};
+use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::{Renderer, params::FragmentParams}};
 
 pub fn create_texture_from_nifti_slice(
     renderer: &mut Renderer,
@@ -27,7 +27,7 @@ pub fn create_texture_from_nifti_slice(
     });
 
     // Create slice parameters buffer
-    let slice_params = SliceParams::new(dims, axis, index as usize, window);
+    let slice_params = FragmentParams::new(dims, axis, index as usize, window);
 
     let slice_buffer = renderer.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("slice_params_buffer"),
