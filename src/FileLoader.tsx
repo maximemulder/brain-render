@@ -8,16 +8,15 @@ type DemoFile = {
 }
 
 async function getDemoFiles() {
-  const files = import.meta.glob('/public/assets/*.nii', {
+  const files: Record<string, {default: string}> = import.meta.glob('/public/assets/*.nii', {
     eager: true,
     query: '?url',
   });
 
-  console.log(files);
-
   const demoFiles: DemoFile[] = [];
 
-  for (const path in files) {
+  for (const module of Object.values(files)) {
+    let path = module.default;
     const name = getFileName(path);
     const url = path;
 
