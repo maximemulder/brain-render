@@ -2,6 +2,31 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import topLevelAwait from "vite-plugin-top-level-await";
 import wasm from "vite-plugin-wasm";
+import fs from "fs";
+import path from 'path';
+
+type DemoFile = {
+  name: string,
+  size: number,
+}
+
+function getDemoFiles(): DemoFile[] {
+  const assetsPath = "./public/assets";
+  const demoFiles: DemoFile[] = [];
+
+  const fileNames = fs.readdirSync(assetsPath).filter(file => file.endsWith('.nii'));
+
+  for (const fileName of fileNames) {
+    const filePath = path.join(assetsPath, fileName);
+    const stats = fs.statSync(filePath);
+    demoFiles.push({
+      name: fileName,
+      size: stats.size,
+    });
+  }
+
+  return demoFiles;
+}
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -22,5 +47,8 @@ export default defineConfig(async ({mode}) => ({
           port: 1421,
         }
       : undefined,
-  }
+  },
+  define: {
+    DEMO_FILES: getDemoFiles(),
+  },
 }));

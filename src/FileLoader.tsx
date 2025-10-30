@@ -1,52 +1,16 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import { formatFileSize, getFileName } from "./util";
+import { ChangeEvent, useState } from "react";
+import { formatFileSize } from "./util";
 
 type DemoFile = {
   name: string,
   size: number,
-  url: string,
 }
 
-async function getDemoFiles() {
-  const files: Record<string, {default: string}> = import.meta.glob('/public/assets/*.nii', {
-    eager: true,
-    query: '?url',
-  });
-
-  const demoFiles: DemoFile[] = [];
-
-  for (const module of Object.values(files)) {
-    let path = module.default;
-    const name = getFileName(path);
-    const url = path;
-
-    const response = await fetch(url, { method: 'HEAD' });
-
-    const contentLength = response.headers.get('content-length');
-    const size = contentLength ? parseInt(contentLength, 10) : 0;
-
-    demoFiles.push({
-      name,
-      size,
-      url,
-    });
-  }
-
-  return demoFiles;
-}
+declare const DEMO_FILES: DemoFile[];
 
 export default function FileLoader({onFileLoaded}: {onFileLoaded: (file: File) => void}) {
-  const [demoFiles, setDemoFiles] = useState<DemoFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-
-  useEffect(() => {
-    async function scanDemoFiles() {
-      setDemoFiles(await getDemoFiles());
-    }
-
-    scanDemoFiles();
-  }, []);
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files === null) {
@@ -61,20 +25,13 @@ export default function FileLoader({onFileLoaded}: {onFileLoaded: (file: File) =
     setDownloadProgress(0);
 
     try {
-      const response = await fetch(file.url);
+      const response = await fetch(`${import.meta.env.BASE_URL}assets/${file.name}`);
 
       if (!response.body || !response.ok) {
         console.error("[file-downloader] failed to fetch file");
         return;
       }
 
-      const contentLength = response.headers.get('content-length');
-      if (contentLength === null) {
-        console.error("[file-downloader] failed to get file size");
-        return;
-      }
-
-      const total = file.size
       let loaded = 0;
 
       const reader = response.body.getReader();
@@ -90,7 +47,7 @@ export default function FileLoader({onFileLoaded}: {onFileLoaded: (file: File) =
         chunks.push(value);
         loaded += value.length;
 
-        setDownloadProgress(Math.round((loaded / total) * 100));
+        setDownloadProgress(Math.round((loaded / file.size) * 100));
       }
 
       const blob = new Blob(chunks, { type: 'application/octet-stream' });
@@ -121,7 +78,7 @@ export default function FileLoader({onFileLoaded}: {onFileLoaded: (file: File) =
       <div className="demo-file-loader">
         <h3>Use demonstration files</h3>
         <div className="demo-files">
-          {demoFiles.map((file) => (
+          {DEMO_FILES.map((file) => (
             <button
               key={file.name}
               type="button"
