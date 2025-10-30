@@ -1,8 +1,8 @@
 import "./App.css";
-import {ChangeEvent, useState} from "react";
+import {ChangeEvent, useEffect, useRef, useState} from "react";
 import NiftiFileWorker from './worker?worker';
 import Controls from "./Controls";
-import { createViewerState, ViewerState } from "./types";
+import { createViewerState, getCoordinate, ViewerState } from "./types";
 import Pane from "./Pane";
 
 /** Web worker that handles the loading and reading of NIfTI files. */
@@ -10,16 +10,47 @@ export const worker = new NiftiFileWorker();
 
 function App() {
   let [state, setState] = useState<ViewerState | null>(null);
+  const stateRef = useRef(state);
+
+  // Keep a reference to the state to use in the worker message reception closure.
+  useEffect(() => {
+    stateRef.current = state;
+  });
+
+  useEffect(() => {
+    worker.onmessage = (event: MessageEvent<any>) => {
+      switch (event.data.action) {
+        case 'read-file':
+          setState(createViewerState(event.data.properties));
+          break;
+        case 'init-renderer':
+          if (stateRef.current === null) {
+            return;
+          }
+
+          setState({...stateRef.current, rendererInitialied: true});
+          break;
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (state === null || !state.rendererInitialied) {
+      return;
+    }
+
+    worker.postMessage({
+      action: 'render-slice',
+      axis: state.axis,
+      coordinate: getCoordinate(state.focalPoint, state.axis),
+      window: state.window,
+    });
+
+  }, [state]);
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files === null) {
       return;
-    }
-
-    worker.onmessage = (event: MessageEvent<any>) => {
-      if (event.data.action === 'read-file') {
-        setState(createViewerState(event.data.properties))
-      }
     }
 
     worker.postMessage({action: 'read-file', file: e.target.files[0]})

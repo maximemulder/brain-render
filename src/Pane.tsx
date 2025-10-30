@@ -9,14 +9,6 @@ export default function Pane({state, setState}: {
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // TODO: Clean render request strategy.
-  worker.postMessage({
-    action: 'render-slice',
-    axis: state.axis,
-    coordinate: getCoordinate(state.focalPoint, state.axis),
-    window: state.window,
-  });
-
   const canvasRef = useCallback((canvasRef: HTMLCanvasElement | null) => {
     if (canvasRef === null) {
       return;
@@ -27,17 +19,6 @@ export default function Pane({state, setState}: {
       action: 'init-renderer',
       canvas: offscreen
     }, [offscreen]);
-
-    // Send a render request immediatly to not have an empty screen.
-    // FIXME: Do something cleaner.
-    setTimeout(() => {
-      worker.postMessage({
-        action: 'render-slice',
-        axis: state.axis,
-        coordinate: getCoordinate(state.focalPoint, state.axis),
-        window: state.window,
-      });
-    }, 100);
   }, []);
 
   useEffect(() => {

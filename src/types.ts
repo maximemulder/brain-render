@@ -4,6 +4,7 @@ export type NiftiProperties = {
 }
 
 export type ViewerState = {
+  rendererInitialied: boolean,
   dimensions: VoxelDimensions,
   focalPoint: VoxelPoint,
   axis: AnatomicalAxis,
@@ -40,6 +41,7 @@ export type DisplayWindow = {
 
 export function createViewerState({dimensions, maximum}: NiftiProperties): ViewerState {
   return {
+    rendererInitialied: false,
     dimensions,
     axis: AnatomicalAxis.Axial,
     focalPoint: {
