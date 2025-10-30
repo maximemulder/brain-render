@@ -17,16 +17,24 @@ thread_local! {
   static RENDERER: RefCell<Option<Renderer>> = RefCell::new(None);
 }
 
+/// Read a NIfTI file.
+#[wasm_bindgen(js_name = readFile)]
+pub async fn read_file(file: File) -> JsValue {
+    utils::set_panic_hook();
+    let properties = nifti_file_worker::read_file(file).await;
+    serde_wasm_bindgen::to_value(&properties).expect("could not serialize nifti file properties")
+}
+
 /// Initiate the renderer.
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = initRenderer)]
 pub async fn init_renderer(canvas: OffscreenCanvas) {
     utils::set_panic_hook();
     let renderer = Renderer::new(canvas).await;
     RENDERER.replace(Some(renderer));
 }
 
-/// Initiate the graphics features.
-#[wasm_bindgen]
+/// Render a slice.
+#[wasm_bindgen(js_name = renderSlice)]
 pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: JsValue) {
     utils::set_panic_hook();
     // Get the slice property
@@ -46,11 +54,4 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
         });
         renderer.render();
     });
-}
-
-#[wasm_bindgen]
-pub async fn read_file(file: File) -> JsValue {
-    utils::set_panic_hook();
-    let properties = nifti_file_worker::read_file(file).await;
-    serde_wasm_bindgen::to_value(&properties).expect("could not serialize nifti file properties")
 }

@@ -44,7 +44,7 @@ thread_local! {
 }
 
 pub async fn read_file(file: File) -> NiftiProperies {
-    log!("Starting to read the NIfTI file.");
+    crate::debug!("[file-reader] reading the nifti file");
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
     let mut volume = nifti.into_volume();
     let dimensions = volume.dim();
@@ -79,7 +79,7 @@ pub async fn read_file(file: File) -> NiftiProperies {
         slices_counter += 1;
     }
 
-    log!("Read {} NIfTI slices.", slices_counter);
+    log!("[file-reader] read {} nifti slices", slices_counter);
 
     let maximum = get_max_data_value(&volume_array);
 

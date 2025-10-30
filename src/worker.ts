@@ -1,4 +1,4 @@
-import wasm, {init_renderer, read_file, render_slice} from "../src-rust/pkg/brain_render_backend";
+import wasm, {initRenderer, readFile, renderSlice} from "../src-rust/pkg/brain_render_backend";
 import { AnatomicalAxis, NiftiProperties, DisplayWindow } from "./types";
 
 type WorkerMessage =
@@ -11,14 +11,14 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
   switch (event.data.action) {
     case 'init-renderer':
       console.debug("[web-worker] initialize renderer");
-      await init_renderer(event.data.canvas);
+      await initRenderer(event.data.canvas);
       postMessage({
         action: 'init-renderer',
       });
       break;
     case 'read-file':
       console.debug("[web-worker] read nifti file");
-      let properties: NiftiProperties = await read_file(event.data.file);
+      let properties: NiftiProperties = await readFile(event.data.file);
       postMessage({
         action: 'read-file',
         properties,
@@ -26,7 +26,7 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
       break;
     case 'render-slice':
       console.debug("[web-worker] render slice");
-      render_slice(event.data.axis, event.data.coordinate, event.data.window);
+      renderSlice(event.data.axis, event.data.coordinate, event.data.window);
   }
 }
 
