@@ -7,7 +7,7 @@ export default function Controls({state, setState}: {
   setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
   return (
-    <div>
+    <div className="controls">
       <div style={{ marginBottom: '1rem' }}>
         <AxisButton
           axis={AnatomicalAxis.Axial}
@@ -155,7 +155,7 @@ function Slider({id, name, value, max, update}: {
   };
 
   return (
-    <div>
+    <div className="control-slider">
       <label htmlFor={id}>{name}: {value}</label>
       <input
         ref={inputRef}

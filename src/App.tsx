@@ -48,19 +48,27 @@ function App() {
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Brain-Render</h1>
+    <div id="app">
+      <header id="header">
+        <h1 className="app-title">Brain Render</h1>
+      </header>
       {state !== null ?
-        <>
+        <main className="viewer">
           <Pane state={state} setState={setState} />
           <Controls state={state} setState={setState} />
-        </>
+        </main>
         : null
       }
-      <label htmlFor="file">Load custom file</label>
-      <input id="file" type="file" onChange={handleFileChange} />
-      <button type="button" onClick={handleLoadDemo}>Load demo file</button>
-    </main>
+      <div className="file-loaders">
+        <div className="file-loader">
+          <label htmlFor="demo-file-input">Load custom file</label>
+          <input id="demo-file-input" type="file" onChange={handleFileChange} />
+        </div>
+        <div className="file-loader">
+          <button type="button" onClick={handleLoadDemo}>Load demonstration file</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
