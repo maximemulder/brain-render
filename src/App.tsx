@@ -2,8 +2,12 @@ import "./App.css";
 import {ChangeEvent, useEffect, useRef, useState} from "react";
 import NiftiFileWorker from './worker?worker';
 import Controls from "./Controls";
-import { createViewerState, getCoordinate, ViewerState } from "./types";
+import { createViewerState, getCoordinate, NiftiProperties, ViewerState } from "./types";
 import Pane from "./Pane";
+
+type WorkerMessage =
+  | {action: 'init-renderer', result: string | null}
+  | {action: 'read-file', properties: NiftiProperties}
 
 /** Web worker that handles the loading and reading of NIfTI files. */
 export const worker = new NiftiFileWorker();
@@ -18,13 +22,26 @@ function App() {
   });
 
   useEffect(() => {
-    worker.onmessage = (event: MessageEvent<any>) => {
+    worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       switch (event.data.action) {
         case 'read-file':
           setState(createViewerState(event.data.properties));
           break;
         case 'init-renderer':
           if (stateRef.current === null) {
+            return;
+          }
+
+          if (event.data.result !== null) {
+            alert(
+              "WebGPU is required to run this application but does not seem to be supported by "
+              + "your web browser yet. WebGPU should be enabled by default on Chromium-based "
+              + "browsers (Google Chrome, Microsoft Edge...) on all operating systems, and  "
+              + "Mozilla Firefox on Windows. For other browsers or operating systems, WebGPU "
+              + "should be enable-able as an experimental feature in the browser configuration."
+              + "\n\n"
+              + "Full error: " + event.data.result
+            );
             return;
           }
 

@@ -11,9 +11,10 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
   switch (event.data.action) {
     case 'init-renderer':
       console.debug("[web-worker] initialize renderer");
-      await initRenderer(event.data.canvas);
+      let result = await initRenderer(event.data.canvas);
       postMessage({
         action: 'init-renderer',
+        result,
       });
       break;
     case 'read-file':

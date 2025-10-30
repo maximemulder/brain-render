@@ -27,10 +27,17 @@ pub async fn read_file(file: File) -> JsValue {
 
 /// Initiate the renderer.
 #[wasm_bindgen(js_name = initRenderer)]
-pub async fn init_renderer(canvas: OffscreenCanvas) {
+pub async fn init_renderer(canvas: OffscreenCanvas) -> JsValue {
     utils::set_panic_hook();
-    let renderer = Renderer::new(canvas).await;
-    RENDERER.replace(Some(renderer));
+    match Renderer::new(canvas).await {
+        Ok(renderer) => {
+            RENDERER.replace(Some(renderer));
+            JsValue::NULL
+        }
+        Err(error) => {
+            error.into()
+        }
+    }
 }
 
 /// Render a slice.

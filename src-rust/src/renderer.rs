@@ -1,4 +1,5 @@
 use ndarray::Array3;
+use wasm_bindgen::JsCast;
 use web_sys::OffscreenCanvas;
 
 use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
@@ -18,12 +19,22 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub async fn new(canvas: OffscreenCanvas) -> Self {
+    pub async fn new(canvas: OffscreenCanvas) -> Result<Self, String> {
         let x = canvas.width();
         let y = canvas.height();
         let instance = wgpu::Instance::default();
+
+        // Check that the canvas supports WebGPU.
+        canvas
+            .get_context("webgpu")
+            .map_err(|_| "Failed to get WebGPU context from canvas")?
+            .ok_or("WebGPU context not supported")?
+            .dyn_into::<web_sys::GpuCanvasContext>()
+            .map_err(|_| "Failed to convert to GPUCanvasContext")?;
+
         let surface = wgpu::SurfaceTarget::OffscreenCanvas(canvas);
-        let surface = instance.create_surface(surface).expect("Failed to create surface");
+        let surface = instance.create_surface(surface)
+            .map_err(|_| "Failed to create surface")?;
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -32,7 +43,7 @@ impl Renderer {
                 compatible_surface: Some(&surface),
             })
             .await
-            .expect("Failed to find an appropriate adapter");
+            .map_err(|_| "Failed to find an appropriate adapter")?;
 
         let (device, queue) = adapter
             .request_device(
@@ -47,7 +58,7 @@ impl Renderer {
                 },
             )
             .await
-            .expect("Failed to create device");
+            .map_err(|_| "Failed to create device")?;
 
         // Create initial empty bind group and layout
         let bind_group_layout = create_bind_group_layout(&device);
@@ -104,7 +115,7 @@ impl Renderer {
 
         surface.configure(&device, &config);
 
-        Self {
+        Ok(Self {
             surface,
             device,
             queue,
@@ -113,7 +124,7 @@ impl Renderer {
             bind_group_layout,
             bind_group: None,
             texture_view: None,
-        }
+        })
     }
 
     // Separate function to update the Nifti slice

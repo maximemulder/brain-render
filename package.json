@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:rust": "RUSTFLAGS=\"-A warnings\" wasm-pack build src-rust --target web",
+    "build:rust": "RUSTFLAGS=\"-A warnings --cfg=web_sys_unstable_apis\"  wasm-pack build src-rust --target web",
     "build:ts": "tsc",
     "build:vite": "vite build",
     "build": "npm run build:rust && npm run build:ts && npm run build:vite",
