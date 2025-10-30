@@ -39,9 +39,8 @@ function App() {
               + "browsers (Google Chrome, Microsoft Edge...) on all operating systems, and  "
               + "Mozilla Firefox on Windows. For other browsers or operating systems, WebGPU "
               + "should be enable-able as an experimental feature in the browser configuration."
-              + "\n\n"
-              + "Full error: " + event.data.result
             );
+
             return;
           }
 

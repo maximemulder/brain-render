@@ -9,6 +9,9 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = console, js_name = debug)]
     pub(crate) fn console_debug(s: &str);
+
+    #[wasm_bindgen(js_namespace = console, js_name = error)]
+    pub(crate) fn console_error(s: &str);
 }
 
 #[macro_export]
@@ -22,5 +25,12 @@ macro_rules! log {
 macro_rules! debug {
     ($($arg:tt)*) => {
         crate::browser::console_debug(&format!($($arg)*))
+    };
+}
+
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => {
+        crate::browser::console_error(&format!($($arg)*))
     };
 }

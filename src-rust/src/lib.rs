@@ -35,6 +35,7 @@ pub async fn init_renderer(canvas: OffscreenCanvas) -> JsValue {
             JsValue::NULL
         }
         Err(error) => {
+            crate::error!("[renderer] {}", error);
             error.into()
         }
     }

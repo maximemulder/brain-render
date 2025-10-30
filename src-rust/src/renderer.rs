@@ -27,14 +27,14 @@ impl Renderer {
         // Check that the canvas supports WebGPU.
         canvas
             .get_context("webgpu")
-            .map_err(|_| "Failed to get WebGPU context from canvas")?
-            .ok_or("WebGPU context not supported")?
+            .map_err(|_| "failed to get webgpu context from canvas")?
+            .ok_or("webgpu context not supported")?
             .dyn_into::<web_sys::GpuCanvasContext>()
-            .map_err(|_| "Failed to convert to GPUCanvasContext")?;
+            .map_err(|_| "failed to convert to gpucanvascontext")?;
 
         let surface = wgpu::SurfaceTarget::OffscreenCanvas(canvas);
         let surface = instance.create_surface(surface)
-            .map_err(|_| "Failed to create surface")?;
+            .map_err(|_| "failed to create surface")?;
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -43,7 +43,7 @@ impl Renderer {
                 compatible_surface: Some(&surface),
             })
             .await
-            .map_err(|_| "Failed to find an appropriate adapter")?;
+            .map_err(|_| "failed to find an appropriate adapter")?;
 
         let (device, queue) = adapter
             .request_device(
@@ -58,7 +58,7 @@ impl Renderer {
                 },
             )
             .await
-            .map_err(|_| "Failed to create device")?;
+            .map_err(|_| "failed to create device")?;
 
         // Create initial empty bind group and layout
         let bind_group_layout = create_bind_group_layout(&device);
