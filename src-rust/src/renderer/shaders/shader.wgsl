@@ -30,31 +30,34 @@ var volume_texture: texture_3d<f32>;
 @group(0) @binding(1)
 var volume_sampler: sampler;
 @group(0) @binding(2)
-var<uniform> window_params: vec2<f32>;
-@group(0) @binding(3)
-var<uniform> slice_params: SliceParams;
+var<uniform> params: SliceParams;
 
 struct SliceParams {
-    slice_index: f32,
-    axis: u32,
     volume_dims: vec3<f32>,
+    padding: u32,
+    window: vec2<f32>,
+    axis: u32,
+    slice_index: f32,
 }
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let volume_coords = calculate_slice_coords(input.tex_coords, slice_params);
+    let voxel_coords = get_voxel_coords(input.tex_coords, params);
 
-    // Sample from 3D texture
-    let raw_value = textureSample(volume_texture, volume_sampler, volume_coords).r;
+    // Get the raw intensity from the volume.
+    let raw_value = textureSample(volume_texture, volume_sampler, voxel_coords).r;
 
-    // Apply windowing (same as before)
-    let normalized_value = (raw_value - window_params.x) / (window_params.y - window_params.x);
+    // Normalize the value based on window parameters.
+    let normalized_value = (raw_value - params.window.x) / (params.window.y - params.window.x);
+
+    // Clamp the normalized value into a grayscale value.
     let grayscale_value = clamp(normalized_value, 0.0, 1.0);
 
+    // Return the pixel as an RGBA value.
     return vec4<f32>(grayscale_value, grayscale_value, grayscale_value, 1.0);
 }
 
-fn calculate_slice_coords(tex_coords: vec2<f32>, params: SliceParams) -> vec3<f32> {
+fn get_voxel_coords(tex_coords: vec2<f32>, params: SliceParams) -> vec3<f32> {
     var coords = vec3<f32>(tex_coords, 0.0);
 
     switch params.axis {
@@ -81,6 +84,5 @@ fn calculate_slice_coords(tex_coords: vec2<f32>, params: SliceParams) -> vec3<f3
         }
     }
 
-    // Normalize coordinates to [0, 1] range
     return coords;
 }

@@ -3,7 +3,6 @@ use std::cell::RefCell;
 use ndarray::{Array3, ShapeBuilder};
 use nifti::{NiftiObject, ReaderStreamedOptions};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
 use web_sys::File;
 use nifti::volume::ndarray::IntoNdArray;
 
@@ -166,14 +165,4 @@ impl NiftiPoint3D {
             AnatomicalAxis::Sagittal => self.x,
         }
     }
-}
-
-pub fn send_file(axis: AnatomicalAxis, coordinate: usize) -> JsValue {
-    STATE.with_borrow(|state| {
-        let Some(state) = state else {
-            return JsValue::NULL;
-        };
-
-        state.get_slice(coordinate, axis).to_js()
-    })
 }

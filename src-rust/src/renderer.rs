@@ -1,8 +1,9 @@
 use ndarray::Array3;
 use web_sys::OffscreenCanvas;
 
-use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::{DisplayWindow, Nifti2DSlice}, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
+use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
 
+pub mod params;
 pub mod texture;
 
 pub struct Renderer {

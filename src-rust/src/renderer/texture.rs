@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{Nifti2DSlice, nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::Renderer};
+use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::{Renderer, params::SliceParams}};
 
 pub fn create_texture_from_nifti_slice(
     renderer: &mut Renderer,
@@ -27,15 +27,13 @@ pub fn create_texture_from_nifti_slice(
     });
 
     // Create slice parameters buffer
-    let slice_params = SliceParams::new(index as usize, axis, dims);
+    let slice_params = SliceParams::new(dims, axis, index as usize, window);
 
     let slice_buffer = renderer.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("slice_params_buffer"),
         contents: bytemuck::cast_slice(&[slice_params]),
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
-
-    let window_buffer = create_window_buffer(&renderer.device, &renderer.queue, window);
 
     renderer.device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("nifti_bind_group"),
@@ -51,10 +49,6 @@ pub fn create_texture_from_nifti_slice(
             },
             wgpu::BindGroupEntry {
                 binding: 2,
-                resource: window_buffer.as_entire_binding(),
-            },
-            wgpu::BindGroupEntry {
-                binding: 3,
                 resource: slice_buffer.as_entire_binding(),
             },
         ],
@@ -132,66 +126,6 @@ pub fn create_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout 
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
-                binding: 3,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            },
         ],
     })
-}
-
-pub fn create_window_buffer(device: &wgpu::Device, queue: &wgpu::Queue, window: DisplayWindow) -> wgpu::Buffer {
-    // Create the window uniform buffer.
-    let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("window_uniform_buffer"),
-        size: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress, // min and max values
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    });
-
-    let window_params = [window.min(), window.max()];
-    queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&window_params));
-    uniform_buffer
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SliceParams {
-    pub slice_index: f32,
-    pub axis: u32,
-    pub volume_dims: [f32; 3],
-    pub padding: [u32; 3],
-}
-
-impl SliceParams {
-    pub fn new(slice_index: usize, axis: AnatomicalAxis, volume_dims: [usize; 3]) -> Self {
-        let slice_axis_dim = match axis {
-            AnatomicalAxis::Axial => volume_dims[2],
-            AnatomicalAxis::Coronal => volume_dims[1],
-            AnatomicalAxis::Sagittal => volume_dims[0],
-        };
-
-        let normalized_slice = if slice_axis_dim > 1 {
-            slice_index as f32 / (slice_axis_dim - 1) as f32
-        } else {
-            0.0
-        };
-
-        Self {
-            slice_index: normalized_slice,
-            axis: axis as u32,
-            volume_dims: [
-                volume_dims[0] as f32,
-                volume_dims[1] as f32,
-                volume_dims[2] as f32,
-            ],
-            padding: [0; 3], // padding to make it vec4 in shader
-        }
-    }
 }
