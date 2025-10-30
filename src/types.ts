@@ -49,8 +49,8 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
     },
     window: {
       maximum: maximum,
-      level:   maximum * 0.5,
-      width:   maximum * 0.1,
+      level:   Math.round(maximum * 0.5),
+      width:   Math.round(maximum * 0.1),
     }
   };
 }
