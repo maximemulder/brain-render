@@ -98,6 +98,7 @@ function AxisSlider({axis, state, setState}: {
   function updateCoordinate(value: number) {
     setState({
       ...state,
+      axis,
       focalPoint: setCoordinate(state.focalPoint, value, axis),
     });
   }
