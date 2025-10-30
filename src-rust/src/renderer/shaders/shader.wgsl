@@ -42,6 +42,7 @@ var<uniform> params: FragmentParams;
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    // Get the voxel coordinates using the fragment parameters.
     let voxel_coords = get_voxel_coords(input.tex_coords, params);
 
     // Get the raw intensity from the volume.
