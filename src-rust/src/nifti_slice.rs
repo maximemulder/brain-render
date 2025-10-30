@@ -16,7 +16,7 @@ pub struct DisplayWindow {
 
 impl DisplayWindow {
     pub fn min(&self) -> f32 {
-        self.width / 2.0
+        self.level - self.width / 2.0
     }
 
     pub fn max(&self) -> f32 {
