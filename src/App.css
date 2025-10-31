@@ -88,6 +88,11 @@
   flex-direction: column;
 }
 
+.axis-buttons {
+  display: flex;
+  gap: 0.5em;
+}
+
 input,
 button {
   border-radius: 8px;

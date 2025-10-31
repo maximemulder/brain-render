@@ -8,13 +8,7 @@ export default function Controls({state, setState}: {
 }) {
   return (
     <div className="controls">
-      <button
-        onClick={() => setState({...state, window: {...state.window, polarity: invertPolarity(state.window.polarity)}})}
-      >
-        {state.window.polarity === DisplayPolarity.Positive
-          ? 'Positive'
-          : 'Negative'}
-      </button>
+      <PolarityButton state={state} setState={setState} />
       <Slider
         id="window-level-slider"
         name="Window level (brightness)"
@@ -29,7 +23,7 @@ export default function Controls({state, setState}: {
         max={state.window.maximum}
         update={(width) => setState({...state, window: {...state.window, width }})}
       />
-      <div style={{ marginBottom: '1rem' }}>
+      <div className="axis-buttons">
         <AxisButton
           axis={AnatomicalAxis.Axial}
           state={state}
@@ -65,6 +59,27 @@ export default function Controls({state, setState}: {
   );
 }
 
+function PolarityButton({state, setState}: {
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
+}) {
+  const handleClick = () => {
+    setState({
+      ...state,
+      window: {
+        ...state.window,
+        polarity: invertPolarity(state.window.polarity),
+      }
+    })
+  };
+
+  return (
+    <button onClick={handleClick}>
+      {state.window.polarity === DisplayPolarity.Positive ? 'Positive' : 'Negative'}
+    </button>
+  );
+}
+
 function AxisButton({axis, state, setState}: {
   axis: AnatomicalAxis,
   state: ViewerState,
@@ -80,12 +95,9 @@ function AxisButton({axis, state, setState}: {
   const name  = getAxisName(axis);
   return (
     <button
+      className="axis-button"
       onClick={() => handleClick()}
-      style={{
-        fontWeight: state.axis === axis ? 'bold' : 'normal',
-        margin: '0 0.25rem',
-        padding: '0.5rem 1rem'
-      }}
+      style={{fontWeight: state.axis === axis ? 'bold' : 'normal'}}
     >
       {name}
     </button>
