@@ -33,10 +33,7 @@ impl FragmentParams {
                 volume_dimensions[2] as f32,
             ],
             padding: 0,
-            window: [
-                window.min(),
-                window.max(),
-            ],
+            window: window.vec(),
             axis: axis as u32,
             slice_index: normalized_slice_index,
         }

@@ -37,6 +37,12 @@ export type DisplayWindow = {
   maximum: number,
   level: number,
   width: number,
+  polarity: DisplayPolarity,
+}
+
+export enum DisplayPolarity {
+  Positive = 'Positive',
+  Negative = 'Negative',
 }
 
 export function createViewerState({dimensions, maximum}: NiftiProperties): ViewerState {
@@ -50,9 +56,10 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
       z: dimensions.slices  / 2,
     },
     window: {
-      maximum: maximum,
-      level:   Math.round(maximum * 0.25),
-      width:   Math.round(maximum * 0.5),
+      maximum,
+      level: Math.round(maximum * 0.25),
+      width: Math.round(maximum * 0.5),
+      polarity: DisplayPolarity.Positive,
     },
   };
 }
@@ -89,4 +96,13 @@ export function getCoordinate(point: VoxelPoint, axis: AnatomicalAxis): number {
 
 export function setCoordinate(point: VoxelPoint, coordinate: number, axis: AnatomicalAxis): VoxelPoint {
   return {...point, [getVoxelAxis(axis)]: coordinate}
+}
+
+export function invertPolarity(polarity: DisplayPolarity): DisplayPolarity {
+  switch (polarity) {
+    case DisplayPolarity.Positive:
+      return DisplayPolarity.Negative;
+    case DisplayPolarity.Negative:
+      return DisplayPolarity.Positive;
+  }
 }

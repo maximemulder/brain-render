@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate } from "./types";
+import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate, DisplayPolarity, invertPolarity } from "./types";
 import { clamp } from "./util";
 
 export default function Controls({state, setState}: {
@@ -8,6 +8,27 @@ export default function Controls({state, setState}: {
 }) {
   return (
     <div className="controls">
+      <button
+        onClick={() => setState({...state, window: {...state.window, polarity: invertPolarity(state.window.polarity)}})}
+      >
+        {state.window.polarity === DisplayPolarity.Positive
+          ? 'Positive'
+          : 'Negative'}
+      </button>
+      <Slider
+        id="window-level-slider"
+        name="Window level (brightness)"
+        value={state.window.level}
+        max={state.window.maximum}
+        update={(level) => setState({...state, window: {...state.window, level }})}
+      />
+      <Slider
+        id="window-width-slider"
+        name="Window width (contrast)"
+        value={state.window.width}
+        max={state.window.maximum}
+        update={(width) => setState({...state, window: {...state.window, width }})}
+      />
       <div style={{ marginBottom: '1rem' }}>
         <AxisButton
           axis={AnatomicalAxis.Axial}
@@ -25,20 +46,6 @@ export default function Controls({state, setState}: {
           setState={setState}
         />
       </div>
-      <Slider
-        id="window-level-slider"
-        name="Window level (brightness)"
-        value={state.window.level}
-        max={state.window.maximum}
-        update={(level) => setState({...state, window: {...state.window, level }})}
-      />
-      <Slider
-        id="window-width-slider"
-        name="Window width (contrast)"
-        value={state.window.width}
-        max={state.window.maximum}
-        update={(width) => setState({...state, window: {...state.window, width }})}
-      />
       <AxisSlider
         axis={AnatomicalAxis.Axial}
         state={state}
