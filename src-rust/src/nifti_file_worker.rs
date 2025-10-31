@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 use web_sys::File;
 use nifti::volume::ndarray::IntoNdArray;
 
-use crate::{log, nifti_slice::Nifti2DSlice};
-
 pub struct NiftiWorkerState {
     pub volume: ndarray::Array3<f32>,
 }
@@ -23,13 +21,6 @@ pub struct VoxelDimensions {
     pub rows:    u16,
     pub columns: u16,
     pub slices:  u16,
-}
-
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct NiftiPoint3D {
-    pub x: u16,
-    pub y: u16,
-    pub z: u16,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -79,7 +70,7 @@ pub async fn read_file(file: File) -> NiftiProperies {
         slices_counter += 1;
     }
 
-    log!("[file-reader] read {} nifti slices", slices_counter);
+    crate::log!("[file-reader] read {} nifti slices", slices_counter);
 
     let maximum = get_max_data_value(&volume_array);
 
@@ -95,74 +86,4 @@ pub async fn read_file(file: File) -> NiftiProperies {
 
 fn get_max_data_value(array: &Array3<f32>) -> f32 {
     array.fold(0.0, |max, &x| max.max(x))
-}
-
-impl NiftiWorkerState {
-    pub fn get_slice(&self, slice_index: usize, axis: AnatomicalAxis) -> Nifti2DSlice {
-        match axis {
-            AnatomicalAxis::Axial => self.get_axial_slice(slice_index),
-            AnatomicalAxis::Coronal => self.get_coronal_slice(slice_index),
-            AnatomicalAxis::Sagittal => self.get_sagittal_slice(slice_index),
-        }
-    }
-
-    pub fn get_axial_slice(&self, slice_index: usize) -> Nifti2DSlice {
-        let width = self.volume.shape()[0];
-        let height = self.volume.shape()[1];
-
-        // Axial: XY plane at constant Z
-        let data = self.volume.slice(ndarray::s![.., .., slice_index])
-            .reversed_axes()
-            .to_owned();
-
-        Nifti2DSlice {
-            width: width as u16,
-            height: height as u16,
-            data
-        }
-    }
-
-    pub fn get_coronal_slice(&self, slice_index: usize) -> Nifti2DSlice {
-        let width = self.volume.shape()[0];
-        let depth = self.volume.shape()[2];
-
-        // Coronal: XZ plane at constant Y
-        // We need to reverse the axes to get proper axis for display
-        let data = self.volume.slice(ndarray::s![.., slice_index, ..])
-            .reversed_axes()  // This makes it [X, Z] for proper display
-            .to_owned();
-
-        Nifti2DSlice {
-            width: width as u16,
-            height: depth as u16,
-            data
-        }
-    }
-
-    pub fn get_sagittal_slice(&self, slice_index: usize) -> Nifti2DSlice {
-        let height = self.volume.shape()[1];
-        let depth = self.volume.shape()[2];
-
-        // Sagittal: YZ plane at constant X
-        // We need to reverse the axes to get proper axis for display
-        let data = self.volume.slice(ndarray::s![slice_index, .., ..])
-            .reversed_axes()  // This makes it [Y, Z] for proper display
-            .to_owned();
-
-        Nifti2DSlice {
-            width: height as u16,
-            height: depth as u16,
-            data
-        }
-    }
-}
-
-impl NiftiPoint3D {
-    pub fn get_coordinate(self, axis: AnatomicalAxis) -> u16 {
-        match axis {
-            AnatomicalAxis::Axial    => self.z,
-            AnatomicalAxis::Coronal  => self.y,
-            AnatomicalAxis::Sagittal => self.x,
-        }
-    }
 }

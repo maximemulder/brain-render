@@ -1,4 +1,4 @@
-use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow};
+use crate::{nifti_file_worker::AnatomicalAxis, display_window::DisplayWindow};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]

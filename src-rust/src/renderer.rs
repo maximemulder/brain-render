@@ -2,7 +2,7 @@ use ndarray::Array3;
 use wasm_bindgen::JsCast;
 use web_sys::OffscreenCanvas;
 
-use crate::{nifti_file_worker::AnatomicalAxis, nifti_slice::DisplayWindow, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
+use crate::{nifti_file_worker::AnatomicalAxis, display_window::DisplayWindow, renderer::texture::{create_bind_group_layout, create_texture_from_nifti_slice}};
 
 pub mod params;
 pub mod texture;

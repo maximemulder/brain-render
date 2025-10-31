@@ -1,9 +1,8 @@
 mod browser;
 mod nifti_file_worker;
-mod nifti_slice;
+mod display_window;
 mod renderer;
 mod utils;
-mod web;
 
 use std::cell::RefCell;
 
@@ -48,7 +47,7 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
     // Get the slice property
     let axis = serde_wasm_bindgen::from_value(js_axis).expect("could not deserialize axis");
     let coordinate = serde_wasm_bindgen::from_value(js_coordinate).expect("could not deserialize coordinate");
-    let window: nifti_slice::DisplayWindow = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
+    let window: display_window::DisplayWindow = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
 
     RENDERER.with_borrow_mut(|renderer| {
         let Some(renderer) = renderer.as_mut() else {
