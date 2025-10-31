@@ -4,8 +4,7 @@ use crate::{nifti_file_worker::AnatomicalAxis, display_window::DisplayWindow};
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct FragmentParams {
     pub volume_dims: [f32; 3],
-    /// Padding for WebGPU alignment.
-    pub padding: u32,
+    pub polarity: u32,
     pub window: [f32; 2],
     pub axis: u32,
     pub slice_index: f32,
@@ -32,8 +31,11 @@ impl FragmentParams {
                 volume_dimensions[1] as f32,
                 volume_dimensions[2] as f32,
             ],
-            padding: 0,
-            window: window.vec(),
+            polarity: window.polarity as u32,
+            window: [
+                window.min(),
+                window.max(),
+            ],
             axis: axis as u32,
             slice_index: normalized_slice_index,
         }

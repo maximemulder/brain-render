@@ -27,7 +27,7 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
 
 struct FragmentParams {
     volume_dims: vec3<f32>,
-    padding: u32,
+    polarity: u32,
     window: vec2<f32>,
     axis: u32,
     slice_index: f32,
@@ -54,8 +54,11 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     // Clamp the normalized value into a grayscale value.
     let grayscale_value = clamp(normalized_value, 0.0, 1.0);
 
+    // Invert the color if specified in the parameters.
+    let final_value = select(grayscale_value, 1.0 - grayscale_value, params.polarity == 1);
+
     // Return the pixel as an RGBA value.
-    return vec4<f32>(grayscale_value, grayscale_value, grayscale_value, 1.0);
+    return vec4<f32>(final_value, final_value, final_value, 1.0);
 }
 
 fn get_voxel_coords(tex_coords: vec2<f32>, params: FragmentParams) -> vec3<f32> {
