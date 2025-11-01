@@ -12,10 +12,10 @@ pub async fn read_nifti_file(file: File) -> Nifti {
     let dimensions = volume_reader.dim().to_owned();
     let is_4d = dimensions.get(3).is_some();
     let timepoints = if is_4d {
-        crate::debug!("[file-reader] found 3d nifti file");
+        crate::debug!("[file-reader] found 4d nifti file");
         dimensions[3] as usize
     } else {
-        crate::debug!("[file-reader] found 4d nifti file");
+        crate::debug!("[file-reader] found 3d nifti file");
         1
     };
 
