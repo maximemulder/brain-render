@@ -8,6 +8,7 @@ pub fn create_texture_from_nifti_slice(
     window: DisplayWindow,
     axis: AnatomicalAxis,
     index: u32,
+    timepoint: usize,
 ) -> wgpu::BindGroup {
     if renderer.texture_views.is_none() {
         let textures = create_textures(&renderer.device, &renderer.queue, volume);
@@ -42,7 +43,7 @@ pub fn create_texture_from_nifti_slice(
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(&renderer.texture_views.as_ref().expect("texture view not initialized")[0]),
+                resource: wgpu::BindingResource::TextureView(&renderer.texture_views.as_ref().expect("texture view not initialized")[timepoint]),
             },
             wgpu::BindGroupEntry {
                 binding: 1,

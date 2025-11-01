@@ -55,6 +55,15 @@ export default function Controls({state, setState}: {
         state={state}
         setState={setState}
       />
+      {state.dimensions.timepoints !== 1 && (
+        <Slider
+          id="time-slider"
+          name="Time"
+          value={state.focalPoint.t}
+          max={state.dimensions.timepoints}
+          update={(value) => setState({...state, focalPoint: {...state.focalPoint, t: value}})}
+        />
+      )}
     </div>
   );
 }

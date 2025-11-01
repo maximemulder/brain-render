@@ -4,7 +4,7 @@ import { AnatomicalAxis, NiftiProperties, DisplayWindow } from "./types";
 type WorkerMessage =
   | {action: 'init-renderer', canvas: OffscreenCanvas}
   | {action: 'read-file', file: File}
-  | {action: 'render-slice', window: DisplayWindow, axis: AnatomicalAxis, coordinate: number}
+  | {action: 'render-slice', window: DisplayWindow, axis: AnatomicalAxis, coordinate: number, timepoint: number}
 
 onmessage = async (event: MessageEvent<WorkerMessage>) => {
   await wasm();
@@ -27,7 +27,7 @@ onmessage = async (event: MessageEvent<WorkerMessage>) => {
       break;
     case 'render-slice':
       console.debug("[web-worker] render slice");
-      renderSlice(event.data.axis, event.data.coordinate, event.data.window);
+      renderSlice(event.data.axis, event.data.coordinate, event.data.timepoint, event.data.window);
   }
 }
 

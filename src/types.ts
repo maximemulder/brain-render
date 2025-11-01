@@ -12,9 +12,10 @@ export type ViewerState = {
 }
 
 export type VoxelDimensions = {
-  rows:    number,
-  columns: number,
-  slices:  number,
+  rows:       number,
+  columns:    number,
+  slices:     number,
+  timepoints: number,
 }
 
 export type VoxelDimension = keyof VoxelDimensions;
@@ -23,6 +24,7 @@ export type VoxelPoint = {
   x: number,
   y: number,
   z: number,
+  t: number,
 }
 
 export type VoxelAxis = keyof VoxelPoint;
@@ -54,6 +56,7 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
       x: Math.round(dimensions.rows    / 2),
       y: Math.round(dimensions.columns / 2),
       z: Math.round(dimensions.slices  / 2),
+      t: 0,
     },
     window: {
       maximum,

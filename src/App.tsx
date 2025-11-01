@@ -60,6 +60,7 @@ export default function App() {
       action: 'render-slice',
       axis: state.axis,
       coordinate: getCoordinate(state.focalPoint, state.axis),
+      timepoint: state.focalPoint.t,
       window: state.window,
     });
 

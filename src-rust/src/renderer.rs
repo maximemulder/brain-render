@@ -127,8 +127,8 @@ impl Renderer {
     }
 
     // Separate function to update the Nifti slice
-    pub fn update_nifti_slice(&mut self, volume: &ndarray::Array4<f32>, window: DisplayWindow, coordinate: usize, axis: AnatomicalAxis) {
-        self.bind_group = Some(create_texture_from_nifti_slice(self, volume, window, axis, coordinate as u32));
+    pub fn update_nifti_slice(&mut self, volume: &ndarray::Array4<f32>, window: DisplayWindow, coordinate: usize, timepoint: usize, axis: AnatomicalAxis) {
+        self.bind_group = Some(create_texture_from_nifti_slice(self, volume, window, axis, coordinate as u32, timepoint));
     }
 
     pub fn render(&mut self) {

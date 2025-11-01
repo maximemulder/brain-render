@@ -46,11 +46,12 @@ pub async fn init_renderer(canvas: OffscreenCanvas) -> JsValue {
 
 /// Render a slice.
 #[wasm_bindgen(js_name = renderSlice)]
-pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: JsValue) {
+pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_timepoint: JsValue, js_window: JsValue) {
     utils::set_panic_hook();
     // Get the slice property
     let axis = serde_wasm_bindgen::from_value(js_axis).expect("could not deserialize axis");
     let coordinate = serde_wasm_bindgen::from_value(js_coordinate).expect("could not deserialize coordinate");
+    let timepoint = serde_wasm_bindgen::from_value(js_timepoint).expect("could not deserialize timepoint");
     let window: display_window::DisplayWindow = serde_wasm_bindgen::from_value(js_window).expect("could not deserialize window");
 
     RENDERER.with_borrow_mut(|renderer| {
@@ -61,7 +62,7 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
 
         NIFTI.with_borrow(|state| {
             let state = state.as_ref().expect("volume not initialized");
-            renderer.update_nifti_slice(&state.volume, window, coordinate, axis);
+            renderer.update_nifti_slice(&state.volume, window, coordinate, timepoint, axis);
         });
         renderer.render();
     });
