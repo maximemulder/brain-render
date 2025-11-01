@@ -61,8 +61,7 @@ pub async fn render_slice(js_axis: JsValue, js_coordinate: JsValue, js_window: J
 
         NIFTI.with_borrow(|state| {
             let state = state.as_ref().expect("volume not initialized");
-            // TODO: Update the renderer to use 4D volume.
-            renderer.update_nifti_slice(&state.volume.index_axis(ndarray::Axis(3), 0).to_owned(), window, coordinate, axis);
+            renderer.update_nifti_slice(&state.volume, window, coordinate, axis);
         });
         renderer.render();
     });

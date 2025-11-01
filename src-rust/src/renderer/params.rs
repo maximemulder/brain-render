@@ -12,7 +12,7 @@ pub struct FragmentParams {
 
 impl FragmentParams {
     pub fn new(
-        volume_dimensions: [usize; 3],
+        volume_dimensions: [usize; 4],
         axis: AnatomicalAxis,
         slice_index: usize,
         window: DisplayWindow,

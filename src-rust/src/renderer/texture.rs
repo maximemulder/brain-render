@@ -1,20 +1,21 @@
 use wgpu::util::DeviceExt;
 
-use crate::{nifti::AnatomicalAxis, display_window::DisplayWindow, renderer::{Renderer, params::FragmentParams}};
+use crate::{display_window::DisplayWindow, nifti::AnatomicalAxis, renderer::{Renderer, params::FragmentParams, texture}};
 
 pub fn create_texture_from_nifti_slice(
     renderer: &mut Renderer,
-    volume: &ndarray::Array3<f32>,
+    volume: &ndarray::Array4<f32>,
     window: DisplayWindow,
     axis: AnatomicalAxis,
     index: u32,
 ) -> wgpu::BindGroup {
-    if renderer.texture_view.is_none() {
-        let texture_view = create_texture_view(&renderer.device, &renderer.queue, volume);
-        renderer.texture_view = Some(texture_view);
+    if renderer.texture_views.is_none() {
+        let textures = create_textures(&renderer.device, &renderer.queue, volume);
+        let texture_views = create_texture_views(textures);
+        renderer.texture_views = Some(texture_views);
     };
 
-    let dims: [usize; 3] = volume.dim().into();
+    let dims: [usize; 4] = volume.dim().into();
 
     let sampler = renderer.device.create_sampler(&wgpu::SamplerDescriptor {
         address_mode_u: wgpu::AddressMode::ClampToEdge,
@@ -41,7 +42,7 @@ pub fn create_texture_from_nifti_slice(
         entries: &[
             wgpu::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(renderer.texture_view.as_ref().expect("texture view not initialized")),
+                resource: wgpu::BindingResource::TextureView(&renderer.texture_views.as_ref().expect("texture view not initialized")[0]),
             },
             wgpu::BindGroupEntry {
                 binding: 1,
@@ -55,45 +56,55 @@ pub fn create_texture_from_nifti_slice(
     })
 }
 
-pub fn create_texture_view(device: &wgpu::Device, queue: &wgpu::Queue, volume: &ndarray::Array3<f32>) -> wgpu::TextureView {
-    let volume_data = volume.as_slice_memory_order().expect("could not slice volume");
-    let dims: [usize; 3] = volume.dim().into();
+pub fn create_textures(device: &wgpu::Device, queue: &wgpu::Queue, volume: &ndarray::Array4<f32>) -> Vec<wgpu::Texture> {
+    let dims: [usize; 4] = volume.dim().into();
+    let [x_size, y_size, z_size, t_size] = dims.map(|x| x as u32);
 
-    let texture_size = wgpu::Extent3d {
-        width: dims[0] as u32,
-        height: dims[1] as u32,
-        depth_or_array_layers: dims[2] as u32,
+    let size =  wgpu::Extent3d {
+        width: x_size,
+        height: y_size,
+        depth_or_array_layers: z_size,
     };
 
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label: Some("nifti_texture"),
-        size: texture_size,
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D3,
-        format: wgpu::TextureFormat::R32Float,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-        view_formats: &[],
-    });
+    // Create one texture per timepoint
+    let textures: Vec<wgpu::Texture> = (0..t_size).map(|_| {
+        device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("nifti_texture"),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D3,
+            format: wgpu::TextureFormat::R32Float,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+        })
+    }).collect();
 
-    // Upload entire volume
-    queue.write_texture(
-        wgpu::TexelCopyTextureInfo {
-            texture: &texture,
-            mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
-        },
-        bytemuck::cast_slice(volume_data),
-        wgpu::TexelCopyBufferLayout {
-            offset: 0,
-            bytes_per_row: Some(4 * dims[0] as u32), // 4 bytes per f32
-            rows_per_image: Some(dims[1] as u32),
-        },
-        texture_size,
-    );
+    for (i, texture) in textures.iter().enumerate() {
+        queue.write_texture(
+            wgpu::TexelCopyTextureInfo {
+                texture: texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            bytemuck::cast_slice(volume.slice(ndarray::s![.., .., .., i]).as_slice_memory_order().expect("Could not slice data")),
+            wgpu::TexelCopyBufferLayout {
+                offset: 0,
+                bytes_per_row: Some(4 * dims[0] as u32), // 4 bytes per f32
+                rows_per_image: Some(dims[1] as u32),
+            },
+            size,
+        );
+    }
 
-    texture.create_view(&wgpu::TextureViewDescriptor::default())
+    textures
+}
+
+pub fn create_texture_views(textures: Vec<wgpu::Texture>) -> Vec<wgpu::TextureView> {
+    textures.into_iter()
+        .map(|texture| texture.create_view(&wgpu::TextureViewDescriptor::default()))
+        .collect()
 }
 
 pub fn create_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {

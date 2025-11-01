@@ -1,4 +1,3 @@
-use ndarray::Array3;
 use wasm_bindgen::JsCast;
 use web_sys::OffscreenCanvas;
 
@@ -15,7 +14,7 @@ pub struct Renderer {
     render_pipeline: wgpu::RenderPipeline,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: Option<wgpu::BindGroup>,
-    pub texture_view: Option<wgpu::TextureView>,
+    pub texture_views: Option<Vec<wgpu::TextureView>>,
 }
 
 impl Renderer {
@@ -123,12 +122,12 @@ impl Renderer {
             render_pipeline,
             bind_group_layout,
             bind_group: None,
-            texture_view: None,
+            texture_views: None,
         })
     }
 
     // Separate function to update the Nifti slice
-    pub fn update_nifti_slice(&mut self, volume: &Array3<f32>, window: DisplayWindow, coordinate: usize, axis: AnatomicalAxis) {
+    pub fn update_nifti_slice(&mut self, volume: &ndarray::Array4<f32>, window: DisplayWindow, coordinate: usize, axis: AnatomicalAxis) {
         self.bind_group = Some(create_texture_from_nifti_slice(self, volume, window, axis, coordinate as u32));
     }
 
