@@ -1,5 +1,5 @@
 [package]
-name = "brain-render-backend"
+name = "brain-renderer"
 version = "0.1.0"
 authors = ["Maxime Mulder <maxime-mulder@outlook.com>"]
 edition = "2024"

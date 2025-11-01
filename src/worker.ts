@@ -1,4 +1,4 @@
-import wasm, {initRenderer, readFile, renderSlice} from "../src-rust/pkg/brain_render_backend";
+import wasm, {initRenderer, readFile, renderSlice} from "../src-rust/pkg/brain_renderer";
 import { AnatomicalAxis, NiftiProperties, DisplayWindow } from "./types";
 
 type WorkerMessage =
