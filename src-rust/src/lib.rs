@@ -22,7 +22,7 @@ thread_local! {
 #[wasm_bindgen(js_name = readFile)]
 pub async fn read_file(file: File) -> JsValue {
     utils::set_panic_hook();
-    let nifti = nifti_reader::read_file(file).await;
+    let nifti = nifti_reader::read_nifti_file(file).await;
     let properties = nifti.get_properties();
     NIFTI.replace(Some(nifti));
     serde_wasm_bindgen::to_value(&properties).expect("could not serialize nifti file properties")
