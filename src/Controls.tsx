@@ -60,7 +60,7 @@ export default function Controls({state, setState}: {
           id="time-slider"
           name="Time"
           value={state.focalPoint.t}
-          max={state.dimensions.timepoints}
+          max={state.dimensions.timepoints - 1}
           update={(value) => setState({...state, focalPoint: {...state.focalPoint, t: value}})}
         />
       )}
