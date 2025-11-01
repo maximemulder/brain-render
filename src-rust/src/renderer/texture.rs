@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{nifti_file_worker::AnatomicalAxis, display_window::DisplayWindow, renderer::{Renderer, params::FragmentParams}};
+use crate::{nifti::AnatomicalAxis, display_window::DisplayWindow, renderer::{Renderer, params::FragmentParams}};
 
 pub fn create_texture_from_nifti_slice(
     renderer: &mut Renderer,
