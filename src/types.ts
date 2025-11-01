@@ -51,9 +51,9 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
     dimensions,
     axis: AnatomicalAxis.Axial,
     focalPoint: {
-      x: dimensions.rows    / 2,
-      y: dimensions.columns / 2,
-      z: dimensions.slices  / 2,
+      x: Math.round(dimensions.rows    / 2),
+      y: Math.round(dimensions.columns / 2),
+      z: Math.round(dimensions.slices  / 2),
     },
     window: {
       maximum,

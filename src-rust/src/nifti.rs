@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 
 pub struct Nifti {
-    pub volume: ndarray::Array3<f32>,
+    pub volume: ndarray::Array4<f32>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -13,9 +13,10 @@ pub struct NiftiProperies {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct VoxelDimensions {
-    pub rows:    usize,
-    pub columns: usize,
-    pub slices:  usize,
+    pub rows:       usize,
+    pub columns:    usize,
+    pub slices:     usize,
+    pub timepoints: usize,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
@@ -32,9 +33,10 @@ impl Nifti {
 
         NiftiProperies {
             dimensions: VoxelDimensions {
-                rows:    dimensions.0,
-                columns: dimensions.1,
-                slices:  dimensions.2,
+                rows:       dimensions.0,
+                columns:    dimensions.1,
+                slices:     dimensions.2,
+                timepoints: dimensions.3,
             },
             maximum,
         }
