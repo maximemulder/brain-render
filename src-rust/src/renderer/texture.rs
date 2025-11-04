@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{display_window::DisplayWindow, nifti::AnatomicalAxis, renderer::{Renderer, params::FragmentParams, texture}};
+use crate::{display_window::DisplayWindow, nifti::{AnatomicalAxis, Rotation}, renderer::{Renderer, params::FragmentParams}};
 
 pub fn create_texture_from_nifti_slice(
     renderer: &mut Renderer,
@@ -9,6 +9,7 @@ pub fn create_texture_from_nifti_slice(
     axis: AnatomicalAxis,
     index: u32,
     timepoint: usize,
+    rotation: Rotation,
 ) -> wgpu::BindGroup {
     if renderer.texture_views.is_none() {
         let textures = create_textures(&renderer.device, &renderer.queue, volume);
@@ -29,7 +30,7 @@ pub fn create_texture_from_nifti_slice(
     });
 
     // Create slice parameters buffer
-    let slice_params = FragmentParams::new(dims, axis, index as usize, window);
+    let slice_params = FragmentParams::new(dims, axis, index as usize, window, rotation);
 
     let slice_buffer = renderer.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("slice_params_buffer"),

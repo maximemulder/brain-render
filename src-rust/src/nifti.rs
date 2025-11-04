@@ -26,6 +26,14 @@ pub enum AnatomicalAxis {
     Sagittal = 2, // YZ plane (constant X)
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum Rotation {
+    Rotate0   = 0,
+    Rotate90  = 1,
+    Rotate180 = 2,
+    Rotate270 = 3,
+}
+
 impl Nifti {
     pub fn get_properties(&self) -> NiftiProperies {
         let maximum = self.get_max_intensity();

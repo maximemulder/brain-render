@@ -62,6 +62,7 @@ export default function App() {
       coordinate: getCoordinate(state.focalPoint, state.axis),
       timepoint: state.focalPoint.t,
       window: state.window,
+      rotation: state.rotation,
     });
 
   }, [state]);

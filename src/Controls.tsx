@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate, DisplayPolarity, invertPolarity } from "./types";
+import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate, DisplayPolarity, invertPolarity, incrementRotation, decrementRotation, Rotation } from "./types";
 import { clamp } from "./util";
 
 export default function Controls({state, setState}: {
@@ -8,6 +8,7 @@ export default function Controls({state, setState}: {
 }) {
   return (
     <div className="controls">
+      <RotationButtons state={state} setState={setState} />
       <PolarityButton state={state} setState={setState} />
       <Slider
         id="window-level-slider"
@@ -86,6 +87,29 @@ function PolarityButton({state, setState}: {
     <button onClick={handleClick}>
       {state.window.polarity === DisplayPolarity.Positive ? 'Positive' : 'Negative'}
     </button>
+  );
+}
+
+function RotationButtons({state, setState}: {
+  state: ViewerState,
+  setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
+}) {
+  const handleClick = (applyRotation: (rotation: Rotation) => Rotation) => () => {
+    setState({
+      ...state,
+      rotation: applyRotation(state.rotation),
+    })
+  };
+
+  return (
+    <div className="rotation-buttons">
+      <button className="rotation-button" onClick={handleClick(decrementRotation)}>
+        -90°
+      </button>
+      <button className="rotation-button" onClick={handleClick(incrementRotation)}>
+        +90°
+      </button>
+    </div>
   );
 }
 

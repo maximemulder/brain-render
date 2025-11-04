@@ -31,6 +31,7 @@ struct FragmentParams {
     window: vec2<f32>,
     axis: u32,
     slice_index: f32,
+    rotation: u32,
 }
 
 @group(0) @binding(0)
@@ -42,7 +43,7 @@ var<uniform> params: FragmentParams;
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    // Get the voxel coordinates using the fragment parameters.
+    // Get the voxel coordinates with rotation applied
     let voxel_coords = get_voxel_coords(input.tex_coords, params);
 
     // Get the raw intensity from the volume.
@@ -62,31 +63,47 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 fn get_voxel_coords(tex_coords: vec2<f32>, params: FragmentParams) -> vec3<f32> {
-    var coords = vec3<f32>(tex_coords, 0.0);
-
     switch params.axis {
         case 0: { // Axial (XY plane at Z)
-            coords.x = tex_coords.x;
-            coords.y = tex_coords.y;
-            coords.z = params.slice_index;
+            let rotated_uv = rotate_slice_coords(tex_coords, params.rotation, params.volume_dims.xy);
+            return vec3<f32>(rotated_uv.x, rotated_uv.y, params.slice_index);
         }
         case 1: { // Coronal (XZ plane at Y)
-            coords.x = tex_coords.x;
-            coords.y = params.slice_index;
-            coords.z = tex_coords.y;
+            let rotated_uv = rotate_slice_coords(tex_coords, params.rotation, params.volume_dims.xz);
+            return vec3<f32>(rotated_uv.x, params.slice_index, rotated_uv.y);
         }
         case 2: { // Sagittal (YZ plane at X)
-            coords.x = params.slice_index;
-            coords.y = tex_coords.x;
-            coords.z = tex_coords.y;
+            let rotated_uv = rotate_slice_coords(tex_coords, params.rotation, params.volume_dims.yz);
+            return vec3<f32>(params.slice_index, rotated_uv.x, rotated_uv.y);
         }
-        default: {
-            // Fallback to axial
-            coords.x = tex_coords.x;
-            coords.y = tex_coords.y;
-            coords.z = params.slice_index;
+        default: { // Default to axial
+            let rotated_uv = rotate_slice_coords(tex_coords, params.rotation, params.volume_dims.xy);
+            return vec3<f32>(rotated_uv.x, rotated_uv.y, params.slice_index);
         }
     }
+}
 
-    return coords;
+fn rotate_slice_coords(tex_coords: vec2<f32>, rotation: u32, plane_dims: vec2<f32>) -> vec2<f32> {
+    let voxel_pos = tex_coords * plane_dims;
+
+    switch rotation {
+        case 0: { // No rotation
+            return tex_coords;
+        }
+        case 1: { // 90 degrees clockwise
+            let rotated_voxel = vec2<f32>(voxel_pos.y, plane_dims.x - voxel_pos.x);
+            return rotated_voxel / vec2<f32>(plane_dims.y, plane_dims.x);
+        }
+        case 2: { // 180 degrees
+            let rotated_voxel = vec2<f32>(plane_dims.x - voxel_pos.x, plane_dims.y - voxel_pos.y);
+            return rotated_voxel / plane_dims;
+        }
+        case 3: { // 270 degrees clockwise
+            let rotated_voxel = vec2<f32>(plane_dims.y - voxel_pos.y, voxel_pos.x);
+            return rotated_voxel / vec2<f32>(plane_dims.y, plane_dims.x);
+        }
+        default: { // Default to no rotation
+            return tex_coords;
+        }
+    }
 }

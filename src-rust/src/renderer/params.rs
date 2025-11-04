@@ -1,4 +1,4 @@
-use crate::{nifti::AnatomicalAxis, display_window::DisplayWindow};
+use crate::{display_window::DisplayWindow, nifti::{AnatomicalAxis, Rotation}};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -8,6 +8,8 @@ pub struct FragmentParams {
     pub window: [f32; 2],
     pub axis: u32,
     pub slice_index: f32,
+    pub rotation: u32,
+    pub padding: [u32; 3],
 }
 
 impl FragmentParams {
@@ -16,6 +18,7 @@ impl FragmentParams {
         axis: AnatomicalAxis,
         slice_index: usize,
         window: DisplayWindow,
+        rotation: Rotation,
     ) -> Self {
         let dimension_length = match axis {
             AnatomicalAxis::Axial    => volume_dimensions[2],
@@ -38,6 +41,8 @@ impl FragmentParams {
             ],
             axis: axis as u32,
             slice_index: normalized_slice_index,
+            rotation: rotation as u32,
+            padding: [0; 3],
         }
     }
 }

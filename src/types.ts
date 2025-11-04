@@ -9,6 +9,7 @@ export type ViewerState = {
   focalPoint: VoxelPoint,
   axis: AnatomicalAxis,
   window: DisplayWindow,
+  rotation: Rotation,
 }
 
 export type VoxelDimensions = {
@@ -47,6 +48,40 @@ export enum DisplayPolarity {
   Negative = 'Negative',
 }
 
+export enum Rotation {
+  Rotate0   = 'Rotate0',
+  Rotate90  = 'Rotate90',
+  Rotate180 = 'Rotate180',
+  Rotate270 = 'Rotate270',
+}
+
+
+export function incrementRotation(rotation: Rotation): Rotation {
+  switch (rotation) {
+    case Rotation.Rotate0:
+      return Rotation.Rotate90;
+    case Rotation.Rotate90:
+      return Rotation.Rotate180;
+    case Rotation.Rotate180:
+      return Rotation.Rotate270;
+    case Rotation.Rotate270:
+      return Rotation.Rotate0;
+  }
+}
+
+export function decrementRotation(rotation: Rotation): Rotation {
+  switch (rotation) {
+    case Rotation.Rotate0:
+      return Rotation.Rotate270;
+    case Rotation.Rotate90:
+      return Rotation.Rotate0;
+    case Rotation.Rotate180:
+      return Rotation.Rotate90;
+    case Rotation.Rotate270:
+      return Rotation.Rotate180;
+  }
+}
+
 export function createViewerState({dimensions, maximum}: NiftiProperties): ViewerState {
   return {
     rendererInitialied: false,
@@ -64,6 +99,7 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
       width: Math.round(maximum * 0.5),
       polarity: DisplayPolarity.Positive,
     },
+    rotation: Rotation.Rotate0,
   };
 }
 
