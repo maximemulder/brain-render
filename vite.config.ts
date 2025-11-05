@@ -32,7 +32,7 @@ function getDemoFiles(): DemoFile[] {
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({mode}) => ({
+export default defineConfig(({mode}) => ({
   plugins: [react(), topLevelAwait(), wasm()],
   base: mode === 'production' ? '/brain-render/' : '/',
   clearScreen: false,
@@ -47,6 +47,11 @@ export default defineConfig(async ({mode}) => ({
           port: 1421,
         }
       : undefined,
+  },
+  css: {
+    modules: {
+      localsConvention: 'camelCase'
+    }
   },
   define: {
     DEMO_FILES: getDemoFiles(),

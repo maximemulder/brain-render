@@ -1,0 +1,37 @@
+
+.controls {
+  padding: 2em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+@mixin control-buttons {
+  display: flex;
+  gap: 0.5em;
+}
+
+@mixin control-button {
+  flex-grow: 1;
+}
+
+.control-slider {
+  display: flex;
+  flex-direction: column;
+}
+
+.rotation-buttons {
+  @include control-buttons;
+}
+
+.rotation-button {
+  @include control-button;
+}
+
+.axis-buttons {
+  @include control-buttons;
+}
+
+.axis-button {
+  @include control-button;
+}

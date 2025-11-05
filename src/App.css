@@ -76,32 +76,6 @@
   max-height: 100%;
 }
 
-.controls {
-  padding: 2em;
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-
-.control-slider {
-  display: flex;
-  flex-direction: column;
-}
-
-.rotation-buttons {
-  display: flex;
-  gap: 0.5em;
-}
-
-.rotation-button {
-  flex-grow: 1;
-}
-
-.axis-buttons {
-  display: flex;
-  gap: 0.5em;
-}
-
 input,
 button {
   border-radius: 8px;

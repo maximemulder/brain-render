@@ -2,12 +2,14 @@ import { useEffect, useRef } from "react";
 import { AnatomicalAxis, ViewerState, getDimension, getCoordinate, setCoordinate, DisplayPolarity, invertPolarity, incrementRotation, decrementRotation, Rotation } from "./types";
 import { clamp } from "./util";
 
+import styles from "./Controls.module.scss";
+
 export default function Controls({state, setState}: {
   state: ViewerState,
   setState: React.Dispatch<React.SetStateAction<ViewerState | null>>,
 }) {
   return (
-    <div className="controls">
+    <div className={styles.controls}>
       <RotationButtons state={state} setState={setState} />
       <PolarityButton state={state} setState={setState} />
       <Slider
@@ -24,7 +26,7 @@ export default function Controls({state, setState}: {
         max={state.window.maximum}
         update={(width) => setState({...state, window: {...state.window, width }})}
       />
-      <div className="axis-buttons">
+      <div className={styles.axisButtons}>
         <AxisButton
           axis={AnatomicalAxis.Axial}
           state={state}
@@ -102,11 +104,11 @@ function RotationButtons({state, setState}: {
   };
 
   return (
-    <div className="rotation-buttons">
-      <button className="rotation-button" onClick={handleClick(decrementRotation)}>
+    <div className={styles.rotationButtons}>
+      <button className={styles.rotationButton} onClick={handleClick(decrementRotation)}>
         -90°
       </button>
-      <button className="rotation-button" onClick={handleClick(incrementRotation)}>
+      <button className={styles.rotationButton} onClick={handleClick(incrementRotation)}>
         +90°
       </button>
     </div>
@@ -128,7 +130,7 @@ function AxisButton({axis, state, setState}: {
   const name  = getAxisName(axis);
   return (
     <button
-      className="axis-button"
+      className={styles.axisButton}
       onClick={() => handleClick()}
       style={{fontWeight: state.axis === axis ? 'bold' : 'normal'}}
     >
@@ -207,7 +209,7 @@ function Slider({id, name, value, max, update}: {
   };
 
   return (
-    <div className="control-slider">
+    <div className={styles.controlSlider}>
       <label htmlFor={id}>{name}: {value}</label>
       <input
         ref={inputRef}
