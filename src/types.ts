@@ -55,7 +55,6 @@ export enum Rotation {
   Rotate270 = 'Rotate270',
 }
 
-
 export function incrementRotation(rotation: Rotation): Rotation {
   switch (rotation) {
     case Rotation.Rotate0:
