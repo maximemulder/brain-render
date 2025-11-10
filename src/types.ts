@@ -1,34 +1,34 @@
 export type NiftiProperties = {
-  dimensions: VoxelDimensions,
+  dimensions: ImageDimensions,
   maximum: number,
 }
 
 export type ViewerState = {
   rendererInitialied: boolean,
-  dimensions: VoxelDimensions,
-  focalPoint: VoxelPoint,
+  dimensions: ImageDimensions,
+  focalPoint: ImagePoint,
   axis: AnatomicalAxis,
   window: DisplayWindow,
   rotation: Rotation,
 }
 
-export type VoxelDimensions = {
+export type ImageDimensions = {
   rows:       number,
   columns:    number,
   slices:     number,
   timepoints: number,
 }
 
-export type VoxelDimension = keyof VoxelDimensions;
+export type ImageDimension = keyof ImageDimensions;
 
-export type VoxelPoint = {
+export type ImagePoint = {
   x: number,
   y: number,
   z: number,
   t: number,
 }
 
-export type VoxelAxis = keyof VoxelPoint;
+export type ImageAxis = keyof ImagePoint;
 
 export enum AnatomicalAxis {
   Axial    = 'Axial',
@@ -103,7 +103,7 @@ export function createViewerState({dimensions, maximum}: NiftiProperties): Viewe
   };
 }
 
-export function getVoxelDimension(axis: AnatomicalAxis): VoxelDimension {
+export function getVoxelDimension(axis: AnatomicalAxis): ImageDimension {
   switch (axis) {
     case AnatomicalAxis.Axial:
       return 'slices';
@@ -114,7 +114,7 @@ export function getVoxelDimension(axis: AnatomicalAxis): VoxelDimension {
   }
 }
 
-export function getVoxelAxis(axis: AnatomicalAxis): VoxelAxis {
+export function getVoxelAxis(axis: AnatomicalAxis): ImageAxis {
   switch (axis) {
     case AnatomicalAxis.Axial:
       return 'z';
@@ -125,15 +125,15 @@ export function getVoxelAxis(axis: AnatomicalAxis): VoxelAxis {
   }
 }
 
-export function getDimension(dimensions: VoxelDimensions, axis: AnatomicalAxis): number {
+export function getDimension(dimensions: ImageDimensions, axis: AnatomicalAxis): number {
   return dimensions[getVoxelDimension(axis)];
 }
 
-export function getCoordinate(point: VoxelPoint, axis: AnatomicalAxis): number {
+export function getCoordinate(point: ImagePoint, axis: AnatomicalAxis): number {
   return point[getVoxelAxis(axis)];
 }
 
-export function setCoordinate(point: VoxelPoint, coordinate: number, axis: AnatomicalAxis): VoxelPoint {
+export function setCoordinate(point: ImagePoint, coordinate: number, axis: AnatomicalAxis): ImagePoint {
   return {...point, [getVoxelAxis(axis)]: coordinate}
 }
 

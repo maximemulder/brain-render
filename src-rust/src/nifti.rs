@@ -1,18 +1,17 @@
 use serde::{Deserialize, Serialize};
 
-
 pub struct Nifti {
     pub volume: ndarray::Array4<f32>,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct NiftiProperies {
-    pub dimensions: VoxelDimensions,
+    pub dimensions: ImageDimensions,
     pub maximum: f32,
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
-pub struct VoxelDimensions {
+pub struct ImageDimensions {
     pub rows:       usize,
     pub columns:    usize,
     pub slices:     usize,
@@ -40,7 +39,7 @@ impl Nifti {
         let dimensions = self.volume.dim();
 
         NiftiProperies {
-            dimensions: VoxelDimensions {
+            dimensions: ImageDimensions {
                 rows:       dimensions.0,
                 columns:    dimensions.1,
                 slices:     dimensions.2,

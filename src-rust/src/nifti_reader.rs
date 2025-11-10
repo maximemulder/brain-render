@@ -31,7 +31,7 @@ pub async fn read_nifti_file(file: File) -> Nifti {
     while volume_reader.slices_left() != 0 {
         let slice = volume_reader.read_slice().expect("Could not read slice");
         let slice_array = slice.into_ndarray::<f32>()
-            .expect("Could not convert slice to ndarray");
+            .expect("could not convert slice to ndarray");
 
         if is_4d {
             volume.slice_mut(ndarray::s![.., .., .., slice_counter]).assign(&slice_array);
