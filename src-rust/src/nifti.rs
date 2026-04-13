@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 pub struct Nifti {
+    pub file_name: String,
     pub volume: ndarray::Array4<f32>,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NiftiProperies {
+    pub file_name: String,
     pub dimensions: ImageDimensions,
     pub maximum: f32,
 }
@@ -39,6 +42,7 @@ impl Nifti {
         let dimensions = self.volume.dim();
 
         NiftiProperies {
+            file_name: self.file_name.clone(),
             dimensions: ImageDimensions {
                 rows:       dimensions.0,
                 columns:    dimensions.1,

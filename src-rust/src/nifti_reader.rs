@@ -7,6 +7,7 @@ use crate::nifti::Nifti;
 
 pub async fn read_nifti_file(file: File) -> Nifti {
     crate::debug!("[file-reader] reading the nifti file");
+    let file_name = file.name();
     let nifti = ReaderStreamedOptions::new().read_web_file(file).expect("Cannot read NIfTI");
     let mut volume_reader = nifti.into_volume();
     let dimensions = volume_reader.dim().to_owned();
@@ -43,5 +44,5 @@ pub async fn read_nifti_file(file: File) -> Nifti {
     }
 
     crate::debug!("[file-reader] read {} nifti slices", slice_counter);
-    Nifti { volume }
+    Nifti { file_name, volume }
 }

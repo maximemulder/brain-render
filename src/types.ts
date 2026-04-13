@@ -1,10 +1,12 @@
 export type NiftiProperties = {
+  fileName: string,
   dimensions: ImageDimensions,
   maximum: number,
 }
 
 export type ViewerState = {
   rendererInitialied: boolean,
+  fileName: string,
   dimensions: ImageDimensions,
   focalPoint: ImagePoint,
   axis: AnatomicalAxis,
@@ -81,9 +83,10 @@ export function decrementRotation(rotation: Rotation): Rotation {
   }
 }
 
-export function createViewerState({dimensions, maximum}: NiftiProperties): ViewerState {
+export function createViewerState({dimensions, maximum, fileName}: NiftiProperties): ViewerState {
   return {
     rendererInitialied: false,
+    fileName,
     dimensions,
     axis: AnatomicalAxis.Axial,
     focalPoint: {

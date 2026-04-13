@@ -10,6 +10,7 @@ export default function Controls({state, setState}: {
 }) {
   return (
     <div className={styles.controls}>
+      <h2 className={styles.controlFileName}>{state.fileName}</h2>
       <RotationButtons state={state} setState={setState} />
       <PolarityButton state={state} setState={setState} />
       <Slider
